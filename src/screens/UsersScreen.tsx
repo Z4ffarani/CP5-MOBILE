@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, FlatList, Pressable, StyleSheet } from 'react-native';
+import { View, Text, FlatList, Pressable, ActivityIndicator, StyleSheet } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../hooks/useAuth';
 import { useUsers } from '../hooks/useUsers';
@@ -7,6 +7,10 @@ import { useGroups } from '../hooks/useGroups';
 import { Avatar } from '../components/Avatar';
 import { Loading } from '../components/Loading';
 import { ErrorMessage } from '../components/ErrorMessage';
+import { EmptyState } from '../components/EmptyState';
+import { TextField } from '../components/TextField';
+import { Button } from '../components/Button';
+import { Icon } from '../components/Icon';
 import { findOrCreateDirectConversation } from '../services/chatService';
 import { colors } from '../theme/colors';
 import type { RootStackParamList } from '../types/navigation';
@@ -23,6 +27,7 @@ export function UsersScreen({ navigation, route }: Props) {
   const initialSelectedIds = route.params?.initialSelectedIds ?? [];
   const [selectedIds, setSelectedIds] = useState<string[]>(initialSelectedIds);
   const [startingChatWith, setStartingChatWith] = useState<string | null>(null);
+  const [chatError, setChatError] = useState<string | null>(null);
 
   function toggleSelection(uid: string) {
     setSelectedIds((current) =>
@@ -37,10 +42,13 @@ export function UsersScreen({ navigation, route }: Props) {
     }
 
     if (!profile) return;
+    setChatError(null);
     setStartingChatWith(uid);
     try {
       const conversation = await findOrCreateDirectConversation(profile.uid, uid);
       navigation.navigate('Chat', { conversationId: conversation.id, conversationType: 'direct' });
+    } catch (err) {
+      setChatError(err instanceof Error ? err.message : 'Não foi possível iniciar a conversa.');
     } finally {
       setStartingChatWith(null);
     }
@@ -63,24 +71,29 @@ export function UsersScreen({ navigation, route }: Props) {
 
   return (
     <View style={styles.container}>
-      <TextInput
-        style={styles.search}
-        placeholder="Buscar usuário"
-        placeholderTextColor={colors.placeholder}
-        value={search}
-        onChangeText={setSearch}
-      />
+      <View style={styles.searchWrapper}>
+        <TextField
+          icon="search-outline"
+          placeholder="Buscar usuário"
+          autoCapitalize="none"
+          value={search}
+          onChangeText={setSearch}
+        />
+      </View>
+
+      <ErrorMessage message={chatError} />
 
       <FlatList
         data={users}
         keyExtractor={(item) => item.uid}
         renderItem={({ item }) => {
           const selected = selectedIds.includes(item.uid);
+          const starting = startingChatWith === item.uid;
           return (
             <Pressable
-              style={[styles.userRow, selected && styles.userRowSelected]}
+              style={({ pressed }) => [styles.userRow, (pressed || selected) && styles.userRowHighlighted]}
               onPress={() => handleSelectUser(item.uid)}
-              disabled={startingChatWith === item.uid}
+              disabled={starting}
             >
               <Avatar uri={item.photoUrl} name={item.name} size={44} />
               <View style={styles.userInfo}>
@@ -88,27 +101,38 @@ export function UsersScreen({ navigation, route }: Props) {
                 <Text style={styles.userEmail}>{item.email}</Text>
               </View>
               {selectForGroup ? (
-                <View style={[styles.checkbox, selected && styles.checkboxChecked]} />
-              ) : null}
+                <Icon
+                  name={selected ? 'checkmark-circle' : 'ellipse-outline'}
+                  size={24}
+                  color={selected ? colors.primary : colors.placeholder}
+                />
+              ) : starting ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : (
+                <Icon name="chatbubble-outline" size={20} color={colors.textSecondary} />
+              )}
             </Pressable>
           );
         }}
         ListEmptyComponent={
-          <View style={styles.empty}>
-            <Text style={styles.emptyText}>Nenhum usuário encontrado.</Text>
-          </View>
+          <EmptyState
+            icon="people-outline"
+            title="Nenhum usuário encontrado"
+            description={search ? 'Tente buscar por outro nome ou e-mail.' : undefined}
+          />
         }
       />
 
       {selectForGroup ? (
-        <>
+        <View style={styles.footer}>
           <ErrorMessage message={error} />
-          <Pressable style={styles.confirmButton} onPress={confirmSelection} disabled={saving}>
-            <Text style={styles.confirmText}>
-              {saving ? 'Salvando...' : `Confirmar seleção (${selectedIds.length})`}
-            </Text>
-          </Pressable>
-        </>
+          <Button
+            label={saving ? 'Salvando...' : `Confirmar seleção (${selectedIds.length})`}
+            icon="checkmark-done-outline"
+            onPress={confirmSelection}
+            loading={saving}
+          />
+        </View>
       ) : null}
     </View>
   );
@@ -119,28 +143,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  search: {
-    margin: 12,
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    fontSize: 15,
-    color: colors.text,
+  searchWrapper: {
+    paddingHorizontal: 12,
+    paddingTop: 12,
   },
   userRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,
     paddingHorizontal: 16,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    backgroundColor: colors.background,
   },
-  userRowSelected: {
-    backgroundColor: colors.primaryLight,
+  userRowHighlighted: {
+    backgroundColor: colors.surface,
   },
   userInfo: {
     flex: 1,
@@ -156,33 +171,10 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 2,
   },
-  checkbox: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 2,
-    borderColor: colors.primary,
-  },
-  checkboxChecked: {
-    backgroundColor: colors.primary,
-  },
-  empty: {
-    alignItems: 'center',
-    marginTop: 48,
-  },
-  emptyText: {
-    color: colors.textSecondary,
-    fontSize: 14,
-  },
-  confirmButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    margin: 12,
-  },
-  confirmText: {
-    color: colors.surface,
-    fontWeight: '700',
+  footer: {
+    padding: 12,
+    backgroundColor: colors.surface,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
   },
 });

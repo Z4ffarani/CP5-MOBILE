@@ -17,7 +17,7 @@ export function ChatMessage({ message, isOwn, authorName }: ChatMessageProps) {
       <View style={[styles.bubble, isOwn ? styles.bubbleOwn : styles.bubbleOther]}>
         {!isOwn && authorName ? <Text style={styles.author}>{authorName}</Text> : null}
         <Text style={styles.text}>{message.text}</Text>
-        <Text style={styles.time}>{time}</Text>
+        <Text style={[styles.time, isOwn && styles.timeOwn]}>{time}</Text>
       </View>
     </View>
   );
@@ -26,7 +26,7 @@ export function ChatMessage({ message, isOwn, authorName }: ChatMessageProps) {
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
-    marginVertical: 4,
+    marginVertical: 3,
     paddingHorizontal: 12,
   },
   rowOwn: {
@@ -37,28 +37,29 @@ const styles = StyleSheet.create({
   },
   bubble: {
     maxWidth: '78%',
-    borderRadius: 14,
+    borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   bubbleOwn: {
     backgroundColor: colors.bubbleOutgoing,
-    borderTopRightRadius: 2,
+    borderBottomRightRadius: 4,
   },
   bubbleOther: {
     backgroundColor: colors.bubbleIncoming,
-    borderTopLeftRadius: 2,
+    borderBottomLeftRadius: 4,
     borderWidth: 1,
     borderColor: colors.border,
   },
   author: {
     fontSize: 12,
     fontWeight: '700',
-    color: colors.primary,
+    color: colors.primarySoftText,
     marginBottom: 2,
   },
   text: {
     fontSize: 15,
+    lineHeight: 20,
     color: colors.text,
   },
   time: {
@@ -66,5 +67,8 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     alignSelf: 'flex-end',
     marginTop: 4,
+  },
+  timeOwn: {
+    color: colors.bubbleOutgoingMeta,
   },
 });

@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, Pressable, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../hooks/useAuth';
 import { ErrorMessage } from '../components/ErrorMessage';
+import { TextField } from '../components/TextField';
+import { Button } from '../components/Button';
+import { Icon } from '../components/Icon';
 import { colors } from '../theme/colors';
 import type { RootStackParamList } from '../types/navigation';
 
@@ -30,34 +33,44 @@ export function LoginScreen({ navigation }: Props) {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <Text style={styles.title}>WhatChat</Text>
-      <Text style={styles.subtitle}>Entre com seu e-mail e senha</Text>
+      <View style={styles.brand}>
+        <View style={styles.logo}>
+          <Icon name="chatbubbles" size={36} color={colors.onPrimary} />
+        </View>
+        <Text style={styles.title}>WhatChat</Text>
+        <Text style={styles.subtitle}>Entre com seu e-mail e senha</Text>
+      </View>
 
-      <TextInput
-        style={styles.input}
+      <TextField
+        icon="mail-outline"
         placeholder="E-mail"
-        placeholderTextColor={colors.placeholder}
         autoCapitalize="none"
         keyboardType="email-address"
         value={email}
         onChangeText={setEmail}
       />
-      <TextInput
-        style={styles.input}
+      <TextField
+        icon="lock-closed-outline"
         placeholder="Senha"
-        placeholderTextColor={colors.placeholder}
         secureTextEntry
         value={password}
         onChangeText={setPassword}
+        onSubmitEditing={handleLogin}
       />
 
       <ErrorMessage message={error} />
 
-      <Pressable style={styles.button} onPress={handleLogin} disabled={submitting || !email || !password}>
-        <Text style={styles.buttonText}>{submitting ? 'Entrando...' : 'Entrar'}</Text>
-      </Pressable>
+      <Button
+        label={submitting ? 'Entrando...' : 'Entrar'}
+        icon="log-in-outline"
+        onPress={handleLogin}
+        loading={submitting}
+        disabled={!email || !password}
+        style={styles.submit}
+      />
 
-      <Pressable onPress={() => navigation.navigate('Register')}>
+      <Pressable style={styles.linkRow} onPress={() => navigation.navigate('Register')}>
+        <Text style={styles.linkHint}>Não tem conta?</Text>
         <Text style={styles.link}>Criar uma conta</Text>
       </Pressable>
     </KeyboardAvoidingView>
@@ -71,46 +84,43 @@ const styles = StyleSheet.create({
     padding: 24,
     backgroundColor: colors.background,
   },
+  brand: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  logo: {
+    width: 72,
+    height: 72,
+    borderRadius: 22,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
   title: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: colors.primary,
-    textAlign: 'center',
+    fontSize: 30,
+    fontWeight: '800',
+    color: colors.text,
   },
   subtitle: {
     fontSize: 14,
     color: colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 4,
-    marginBottom: 32,
+    marginTop: 6,
   },
-  input: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: colors.text,
-    marginBottom: 12,
-  },
-  button: {
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
+  submit: {
     marginTop: 8,
   },
-  buttonText: {
-    color: colors.surface,
-    fontWeight: '700',
-    fontSize: 16,
+  linkRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 24,
+  },
+  linkHint: {
+    color: colors.textSecondary,
   },
   link: {
     color: colors.primary,
-    textAlign: 'center',
-    marginTop: 20,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, View, Text, StyleSheet } from 'react-native';
 import { Avatar } from './Avatar';
+import { Icon } from './Icon';
 import { colors } from '../theme/colors';
 import type { ChatUser } from '../types/user';
 
@@ -13,15 +14,25 @@ type GroupMemberItemProps = {
 
 export function GroupMemberItem({ user, isOwner, onPress, onRemove }: GroupMemberItemProps) {
   return (
-    <Pressable style={styles.container} onPress={onPress}>
+    <Pressable style={({ pressed }) => [styles.container, pressed && styles.pressed]} onPress={onPress}>
       <Avatar uri={user.photoUrl} name={user.name} size={44} />
       <View style={styles.content}>
         <Text style={styles.name}>{user.name}</Text>
-        {isOwner ? <Text style={styles.owner}>Proprietário</Text> : null}
+        {isOwner ? (
+          <View style={styles.ownerRow}>
+            <Icon name="shield-checkmark" size={13} color={colors.primarySoftText} />
+            <Text style={styles.owner}>Proprietário</Text>
+          </View>
+        ) : null}
       </View>
       {onRemove ? (
-        <Pressable onPress={onRemove} hitSlop={8}>
-          <Text style={styles.remove}>Remover</Text>
+        <Pressable
+          onPress={onRemove}
+          hitSlop={8}
+          style={styles.removeButton}
+          accessibilityLabel={`Remover ${user.name} do grupo`}
+        >
+          <Icon name="person-remove-outline" size={20} color={colors.danger} />
         </Pressable>
       ) : null}
     </Pressable>
@@ -34,9 +45,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     paddingHorizontal: 16,
+    backgroundColor: colors.background,
+  },
+  pressed: {
     backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   content: {
     flex: 1,
@@ -47,14 +59,22 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
   },
+  ownerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 3,
+  },
   owner: {
     fontSize: 12,
-    color: colors.primary,
-    marginTop: 2,
+    color: colors.primarySoftText,
   },
-  remove: {
-    fontSize: 13,
-    color: colors.danger,
-    fontWeight: '600',
+  removeButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: colors.dangerSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

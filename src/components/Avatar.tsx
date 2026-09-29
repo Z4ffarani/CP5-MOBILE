@@ -26,12 +26,12 @@ export function Avatar({ uri, name, size = 48 }: AvatarProps) {
 
 const styles = StyleSheet.create({
   fallback: {
-    backgroundColor: colors.primaryLight,
+    backgroundColor: colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   initial: {
-    color: colors.primary,
-    fontWeight: '600',
+    color: colors.primarySoftText,
+    fontWeight: '700',
   },
 });

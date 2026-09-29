@@ -7,6 +7,8 @@ import { Avatar } from '../components/Avatar';
 import { ChatMessage } from '../components/ChatMessage';
 import { ChatInput } from '../components/ChatInput';
 import { ErrorMessage } from '../components/ErrorMessage';
+import { EmptyState } from '../components/EmptyState';
+import { Icon } from '../components/Icon';
 import { getGroup } from '../services/groupService';
 import { getUserProfile } from '../services/userService';
 import { colors } from '../theme/colors';
@@ -66,14 +68,27 @@ export function ChatScreen({ navigation, route }: Props) {
     navigation.setOptions({
       headerTitle: () => (
         <Pressable style={styles.headerTitle} onPress={openHeaderTarget}>
-          <Avatar uri={photoUrl} name={title || '?'} size={32} />
-          <Text style={styles.headerTitleText} numberOfLines={1}>
-            {title}
-          </Text>
+          <Avatar uri={photoUrl} name={title || '?'} size={34} />
+          <View>
+            <Text style={styles.headerTitleText} numberOfLines={1}>
+              {title}
+            </Text>
+            <Text style={styles.headerSubtitle}>
+              {conversationType === 'group' ? 'Toque para ver os integrantes' : 'Toque para ver o perfil'}
+            </Text>
+          </View>
         </Pressable>
       ),
+      headerRight:
+        conversationType === 'group'
+          ? () => (
+              <Pressable onPress={openHeaderTarget} hitSlop={8} accessibilityLabel="Integrantes do grupo">
+                <Icon name="people-outline" size={22} color={colors.text} />
+              </Pressable>
+            )
+          : undefined,
     });
-  }, [navigation, title, photoUrl, otherUid]);
+  }, [navigation, title, photoUrl, otherUid, conversationType]);
 
   const orderedForList = useMemo(() => [...messages].reverse(), [messages]);
 
@@ -104,7 +119,7 @@ export function ChatScreen({ navigation, route }: Props) {
         )}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyText}>Nenhuma mensagem ainda. Envie a primeira!</Text>
+            <EmptyState icon="chatbubble-ellipses-outline" title="Nenhuma mensagem ainda" description="Envie a primeira!" />
           </View>
         }
       />
@@ -134,19 +149,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     transform: [{ scaleY: -1 }],
   },
-  emptyText: {
-    color: colors.textSecondary,
-    fontSize: 14,
-  },
   headerTitle: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
   headerTitleText: {
     fontSize: 16,
     fontWeight: '700',
     color: colors.text,
-    maxWidth: 200,
+    maxWidth: 190,
+  },
+  headerSubtitle: {
+    fontSize: 11,
+    color: colors.textSecondary,
   },
 });

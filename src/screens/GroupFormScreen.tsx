@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Pressable, Image, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../hooks/useAuth';
@@ -7,6 +7,10 @@ import { useGroups } from '../hooks/useGroups';
 import { getGroup } from '../services/groupService';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { Loading } from '../components/Loading';
+import { TextField } from '../components/TextField';
+import { Button } from '../components/Button';
+import { PhotoPicker } from '../components/PhotoPicker';
+import { Icon, type IconName } from '../components/Icon';
 import { availableSlots } from '../utils/groupValidation';
 import { colors } from '../theme/colors';
 import type { RootStackParamList } from '../types/navigation';
@@ -14,11 +18,31 @@ import type { ChatGroup, NotificationPolicy } from '../types/group';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'GroupForm'>;
 
-const POLICIES: { value: NotificationPolicy; label: string }[] = [
-  { value: 'all_group_messages', label: 'Todas as mensagens do grupo' },
-  { value: 'mentioned_members', label: 'Somente integrantes mencionados' },
-  { value: 'direct_messages_only', label: 'Somente mensagens diretas' },
-  { value: 'disabled', label: 'Desativado' },
+const POLICIES: { value: NotificationPolicy; label: string; description: string; icon: IconName }[] = [
+  {
+    value: 'all_group_messages',
+    label: 'Todas as mensagens do grupo',
+    description: 'Todos os integrantes são notificados.',
+    icon: 'notifications-outline',
+  },
+  {
+    value: 'mentioned_members',
+    label: 'Somente integrantes mencionados',
+    description: 'Apenas quem for mencionado recebe o aviso.',
+    icon: 'at-outline',
+  },
+  {
+    value: 'direct_messages_only',
+    label: 'Somente mensagens diretas',
+    description: 'Mensagens deste grupo não geram notificação.',
+    icon: 'person-outline',
+  },
+  {
+    value: 'disabled',
+    label: 'Desativado',
+    description: 'Nenhuma notificação para este grupo.',
+    icon: 'notifications-off-outline',
+  },
 ];
 
 export function GroupFormScreen({ navigation, route }: Props) {
@@ -44,16 +68,18 @@ export function GroupFormScreen({ navigation, route }: Props) {
 
   useEffect(() => {
     if (!groupId) return;
-    getGroup(groupId).then((group) => {
-      setExistingGroup(group);
-      if (group) {
-        setName(group.name);
-        setMemberLimit(String(group.memberLimit));
-        setPolicy(group.notificationPolicy);
-        setMemberIds(group.memberIds);
-      }
-      setLoadingGroup(false);
-    });
+    getGroup(groupId)
+      .then((group) => {
+        setExistingGroup(group);
+        if (group) {
+          setName(group.name);
+          setMemberLimit(String(group.memberLimit));
+          setPolicy(group.notificationPolicy);
+          setMemberIds(group.memberIds);
+        }
+      })
+      .catch(() => setFormError('Não foi possível carregar o grupo.'))
+      .finally(() => setLoadingGroup(false));
   }, [groupId]);
 
   async function pickPhoto() {
@@ -130,66 +156,87 @@ export function GroupFormScreen({ navigation, route }: Props) {
   const slots = availableSlots(limitNumber, isEditing ? memberIds : [...memberIds, 'owner']);
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>{isEditing ? 'Editar grupo' : 'Novo grupo'}</Text>
+    <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+      <Text style={styles.title}>{isEditing ? `Editar ${existingGroup?.name ?? 'grupo'}` : 'Novo grupo'}</Text>
 
       {!isEditing ? (
         <>
-          <Pressable style={styles.photoPicker} onPress={pickPhoto}>
-            {photoUri ? (
-              <Image source={{ uri: photoUri }} style={styles.photo} />
-            ) : (
-              <Text style={styles.photoPlaceholder}>Foto do grupo</Text>
-            )}
-          </Pressable>
-
-          <TextInput
-            style={styles.input}
-            placeholder="Nome do grupo"
-            placeholderTextColor={colors.placeholder}
-            value={name}
-            onChangeText={setName}
+          <PhotoPicker
+            uri={photoUri}
+            placeholderIcon="people"
+            label={photoUri ? 'Toque para trocar a foto' : 'Adicionar foto do grupo'}
+            onPress={pickPhoto}
           />
 
-          <Pressable
-            style={styles.secondaryButton}
+          <TextField icon="chatbubbles-outline" placeholder="Nome do grupo" value={name} onChangeText={setName} />
+
+          <Button
+            label={`Selecionar integrantes (${memberIds.length})`}
+            icon="person-add-outline"
+            variant="outline"
             onPress={() => navigation.navigate('Users', { selectForGroup: true, initialSelectedIds: memberIds })}
-          >
-            <Text style={styles.secondaryButtonText}>Selecionar integrantes ({memberIds.length})</Text>
-          </Pressable>
+            style={styles.spaced}
+          />
         </>
       ) : (
-        <Pressable
-          style={styles.secondaryButton}
+        <Button
+          label="Gerenciar integrantes"
+          icon="people-outline"
+          variant="outline"
           onPress={() => existingGroup && navigation.navigate('GroupMembers', { groupId: existingGroup.id })}
-        >
-          <Text style={styles.secondaryButtonText}>Gerenciar integrantes</Text>
-        </Pressable>
+          style={styles.spaced}
+        />
       )}
 
-      <TextInput
-        style={styles.input}
+      <Text style={styles.sectionLabel}>Limite de integrantes</Text>
+      <TextField
+        icon="people-circle-outline"
         placeholder="Limite de integrantes"
-        placeholderTextColor={colors.placeholder}
         keyboardType="number-pad"
         value={memberLimit}
         onChangeText={setMemberLimit}
       />
-      <Text style={styles.slots}>Vagas disponíveis: {slots}</Text>
+      <View style={styles.slotsRow}>
+        <Icon name="information-circle-outline" size={16} color={slots === 0 ? colors.danger : colors.textSecondary} />
+        <Text style={[styles.slots, slots === 0 && styles.slotsFull]}>
+          {slots === 0 ? 'Sem vagas disponíveis' : `Vagas disponíveis: ${slots}`}
+        </Text>
+      </View>
 
       <Text style={styles.sectionLabel}>Política de notificações</Text>
-      {POLICIES.map((option) => (
-        <Pressable key={option.value} style={styles.policyOption} onPress={() => setPolicy(option.value)}>
-          <View style={[styles.radio, policy === option.value && styles.radioSelected]} />
-          <Text style={styles.policyLabel}>{option.label}</Text>
-        </Pressable>
-      ))}
+      {POLICIES.map((option) => {
+        const selected = policy === option.value;
+        return (
+          <Pressable
+            key={option.value}
+            style={[styles.policyOption, selected && styles.policyOptionSelected]}
+            onPress={() => setPolicy(option.value)}
+          >
+            <View style={[styles.policyIcon, selected && styles.policyIconSelected]}>
+              <Icon name={option.icon} size={18} color={selected ? colors.onPrimary : colors.primarySoftText} />
+            </View>
+            <View style={styles.policyText}>
+              <Text style={styles.policyLabel}>{option.label}</Text>
+              <Text style={styles.policyDescription}>{option.description}</Text>
+            </View>
+            <Icon
+              name={selected ? 'radio-button-on' : 'radio-button-off'}
+              size={22}
+              color={selected ? colors.primary : colors.placeholder}
+            />
+          </Pressable>
+        );
+      })}
 
       <ErrorMessage message={formError ?? error} />
 
-      <Pressable style={styles.button} onPress={handleSubmit} disabled={saving}>
-        <Text style={styles.buttonText}>{saving ? 'Salvando...' : isEditing ? 'Salvar alterações' : 'Criar grupo'}</Text>
-      </Pressable>
+      <Button
+        label={saving ? 'Salvando...' : isEditing ? 'Salvar alterações' : 'Criar grupo'}
+        icon={isEditing ? 'save-outline' : 'checkmark-circle-outline'}
+        onPress={handleSubmit}
+        loading={saving}
+        style={styles.submit}
+      />
     </ScrollView>
   );
 }
@@ -197,101 +244,82 @@ export function GroupFormScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    padding: 24,
+    padding: 20,
     backgroundColor: colors.background,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: colors.primary,
+    fontSize: 22,
+    fontWeight: '800',
+    color: colors.text,
     textAlign: 'center',
     marginBottom: 20,
   },
-  photoPicker: {
-    alignSelf: 'center',
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: colors.primaryLight,
+  spaced: {
+    marginBottom: 20,
+  },
+  sectionLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 10,
+  },
+  slotsRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-    overflow: 'hidden',
-  },
-  photo: {
-    width: 96,
-    height: 96,
-  },
-  photoPlaceholder: {
-    fontSize: 12,
-    color: colors.primary,
-    textAlign: 'center',
-    paddingHorizontal: 8,
-  },
-  input: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: colors.text,
-    marginBottom: 12,
-  },
-  secondaryButton: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  secondaryButtonText: {
-    color: colors.primary,
-    fontWeight: '600',
+    gap: 6,
+    marginTop: -4,
+    marginBottom: 20,
   },
   slots: {
     fontSize: 13,
     color: colors.textSecondary,
-    marginBottom: 16,
   },
-  sectionLabel: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: 8,
+  slotsFull: {
+    color: colors.danger,
   },
   policyOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
+    gap: 12,
+    padding: 12,
+    marginBottom: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
-  radio: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
+  policyOptionSelected: {
     borderColor: colors.primary,
-    marginRight: 12,
+    backgroundColor: colors.primarySoft,
   },
-  radioSelected: {
+  policyIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.surfaceElevated,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  policyIconSelected: {
     backgroundColor: colors.primary,
+  },
+  policyText: {
+    flex: 1,
   },
   policyLabel: {
     fontSize: 14,
+    fontWeight: '600',
     color: colors.text,
   },
-  button: {
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 20,
+  policyDescription: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 2,
   },
-  buttonText: {
-    color: colors.surface,
-    fontWeight: '700',
-    fontSize: 16,
+  submit: {
+    marginTop: 16,
+    marginBottom: 12,
   },
 });

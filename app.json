@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.whatchat.app",
@@ -16,7 +16,7 @@
     "android": {
       "package": "com.whatchat.app",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#0B1017",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -37,9 +37,10 @@
         "expo-notifications",
         {
           "icon": "./assets/icon.png",
-          "color": "#0A66C2"
+          "color": "#4C8DFF"
         }
       ]
-    ]
+    ],
+    "backgroundColor": "#0B1017"
   }
 }

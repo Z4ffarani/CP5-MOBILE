@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, View, Text, StyleSheet } from 'react-native';
 import { Avatar } from './Avatar';
+import { Icon } from './Icon';
 import { colors } from '../theme/colors';
 import type { ConversationSummary } from '../types/chat';
 
@@ -10,24 +11,25 @@ type ConversationItemProps = {
 };
 
 export function ConversationItem({ conversation, onPress }: ConversationItemProps) {
+  const isGroup = conversation.type === 'group';
+
   return (
-    <Pressable style={styles.container} onPress={onPress}>
-      <Avatar uri={conversation.photoUrl} name={conversation.title} size={52} />
-      <View style={styles.content}>
-        <View style={styles.titleRow}>
-          <Text style={styles.title} numberOfLines={1}>
-            {conversation.title}
-          </Text>
-          <View style={[styles.badge, conversation.type === 'group' ? styles.groupBadge : styles.directBadge]}>
-            <Text style={[styles.badgeText, conversation.type === 'group' ? styles.groupBadgeText : styles.directBadgeText]}>
-              {conversation.type === 'group' ? 'Grupo' : 'Direto'}
-            </Text>
-          </View>
+    <Pressable style={({ pressed }) => [styles.container, pressed && styles.pressed]} onPress={onPress}>
+      <View>
+        <Avatar uri={conversation.photoUrl} name={conversation.title} size={52} />
+        <View style={styles.typeBadge}>
+          <Icon name={isGroup ? 'people' : 'person'} size={11} color={colors.onPrimary} />
         </View>
+      </View>
+      <View style={styles.content}>
+        <Text style={styles.title} numberOfLines={1}>
+          {conversation.title}
+        </Text>
         <Text style={styles.subtitle} numberOfLines={1}>
-          {conversation.lastMessage ?? 'Nenhuma mensagem ainda'}
+          {conversation.lastMessage ?? (isGroup ? 'Conversa em grupo' : 'Conversa individual')}
         </Text>
       </View>
+      <Icon name="chevron-forward" size={18} color={colors.placeholder} />
     </Pressable>
   );
 }
@@ -38,50 +40,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 16,
+    backgroundColor: colors.background,
+  },
+  pressed: {
     backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+  },
+  typeBadge: {
+    position: 'absolute',
+    right: -2,
+    bottom: -2,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: colors.primary,
+    borderWidth: 2,
+    borderColor: colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   content: {
     flex: 1,
-    marginLeft: 12,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    marginLeft: 14,
+    marginRight: 8,
   },
   title: {
     fontSize: 16,
     fontWeight: '600',
     color: colors.text,
-    flexShrink: 1,
   },
   subtitle: {
     fontSize: 13,
     color: colors.textSecondary,
-    marginTop: 2,
-  },
-  badge: {
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    marginLeft: 8,
-  },
-  directBadge: {
-    backgroundColor: colors.primaryLight,
-  },
-  groupBadge: {
-    backgroundColor: colors.primary,
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  directBadgeText: {
-    color: colors.primaryDark,
-  },
-  groupBadgeText: {
-    color: colors.surface,
+    marginTop: 3,
   },
 });

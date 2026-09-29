@@ -274,7 +274,7 @@ Hooks customizados (`useAuth`, `useChat`, `useGroups`, `useUsers`, `useConversat
 
 ### 🔒 Segurança
 
-- [ ] Regras de segurança do Firestore e Realtime Database — `firestore.rules` e `database.rules.json` atualizadas (participantes, espelho de integrantes dos grupos); falta republicá-las no Console do Firebase
+- [x] Regras de segurança do Firestore e Realtime Database — `firestore.rules` e `database.rules.json` (participantes, espelho de integrantes dos grupos) publicadas no Console do Firebase
 
 ### 🔷 TypeScript, hooks e organização
 

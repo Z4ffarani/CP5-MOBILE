@@ -4,6 +4,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Avatar } from '../components/Avatar';
 import { Loading } from '../components/Loading';
 import { ErrorMessage } from '../components/ErrorMessage';
+import { Icon, type IconName } from '../components/Icon';
 import { getUserProfile } from '../services/userService';
 import { colors } from '../theme/colors';
 import type { RootStackParamList } from '../types/navigation';
@@ -42,22 +43,29 @@ export function ProfileScreen({ route }: Props) {
   if (error) return <ErrorMessage message={error} />;
   if (!profile) return <ErrorMessage message="Perfil não encontrado." />;
 
+  const fields: { icon: IconName; label: string; value: string }[] = [
+    { icon: 'mail-outline', label: 'E-mail', value: fieldOrFallback(profile.email) },
+    { icon: 'call-outline', label: 'Número de celular', value: fieldOrFallback(profile.phoneNumber) },
+    { icon: 'calendar-outline', label: 'Data de nascimento', value: fieldOrFallback(profile.birthDate) },
+  ];
+
   return (
     <View style={styles.container}>
       <Avatar uri={profile.photoUrl} name={profile.name} size={112} />
       <Text style={styles.name}>{fieldOrFallback(profile.name)}</Text>
 
-      <View style={styles.infoBlock}>
-        <Text style={styles.label}>E-mail</Text>
-        <Text style={styles.value}>{fieldOrFallback(profile.email)}</Text>
-      </View>
-      <View style={styles.infoBlock}>
-        <Text style={styles.label}>Número de celular</Text>
-        <Text style={styles.value}>{fieldOrFallback(profile.phoneNumber)}</Text>
-      </View>
-      <View style={styles.infoBlock}>
-        <Text style={styles.label}>Data de nascimento</Text>
-        <Text style={styles.value}>{fieldOrFallback(profile.birthDate)}</Text>
+      <View style={styles.card}>
+        {fields.map((field, index) => (
+          <View key={field.label} style={[styles.row, index > 0 && styles.rowDivider]}>
+            <View style={styles.rowIcon}>
+              <Icon name={field.icon} size={18} color={colors.primarySoftText} />
+            </View>
+            <View style={styles.rowContent}>
+              <Text style={styles.label}>{field.label}</Text>
+              <Text style={styles.value}>{field.value}</Text>
+            </View>
+          </View>
+        ))}
       </View>
     </View>
   );
@@ -77,19 +85,39 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 24,
   },
-  infoBlock: {
+  card: {
     width: '100%',
     backgroundColor: colors.surface,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: 14,
-    marginBottom: 12,
+    paddingHorizontal: 14,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 14,
+  },
+  rowDivider: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  rowIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rowContent: {
+    flex: 1,
   },
   label: {
     fontSize: 12,
     color: colors.textSecondary,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   value: {
     fontSize: 15,

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { Icon } from './Icon';
 import { colors } from '../theme/colors';
 
 type ErrorMessageProps = {
@@ -8,14 +9,29 @@ type ErrorMessageProps = {
 
 export function ErrorMessage({ message }: ErrorMessageProps) {
   if (!message) return null;
-  return <Text style={styles.text}>{message}</Text>;
+  return (
+    <View style={styles.container} accessibilityRole="alert">
+      <Icon name="alert-circle-outline" size={18} color={colors.danger} />
+      <Text style={styles.text}>{message}</Text>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-  text: {
-    color: colors.danger,
-    fontSize: 14,
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: colors.dangerSoft,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     marginVertical: 8,
-    textAlign: 'center',
+    marginHorizontal: 12,
+  },
+  text: {
+    flex: 1,
+    color: colors.danger,
+    fontSize: 13,
   },
 });

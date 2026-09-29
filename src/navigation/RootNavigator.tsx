@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DarkTheme, type Theme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../hooks/useAuth';
 import { useNotifications } from '../hooks/useNotifications';
@@ -19,10 +19,24 @@ import type { PushNotificationData } from '../types/notification';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
+const navigationTheme: Theme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    primary: colors.primary,
+    background: colors.background,
+    card: colors.surface,
+    text: colors.text,
+    border: colors.border,
+    notification: colors.primary,
+  },
+};
+
 const screenOptions = {
-  headerStyle: { backgroundColor: colors.primary },
-  headerTintColor: colors.surface,
+  headerStyle: { backgroundColor: colors.surface },
+  headerTintColor: colors.text,
   headerTitleStyle: { fontWeight: '700' as const },
+  headerShadowVisible: false,
   contentStyle: { backgroundColor: colors.background },
 };
 
@@ -39,7 +53,7 @@ export function RootNavigator() {
   if (loading) return <Loading />;
 
   return (
-    <NavigationContainer ref={navigationRef} onReady={() => setNavigationReady(true)}>
+    <NavigationContainer ref={navigationRef} theme={navigationTheme} onReady={() => setNavigationReady(true)}>
       <Stack.Navigator screenOptions={screenOptions}>
         {firebaseUser ? (
           <>
