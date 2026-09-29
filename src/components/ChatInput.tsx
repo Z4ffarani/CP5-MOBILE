@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { View, TextInput, Pressable, Text, ScrollView, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, TextInput, Pressable, Text, ScrollView, Keyboard, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from './Icon';
 import { colors } from '../theme/colors';
 import type { ChatUser } from '../types/user';
@@ -13,7 +14,21 @@ type ChatInputProps = {
 export function ChatInput({ onSend, disabled, mentionableMembers }: ChatInputProps) {
   const [text, setText] = useState('');
   const [mentionedUserIds, setMentionedUserIds] = useState<string[]>([]);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const insets = useSafeAreaInsets();
   const canSend = !disabled && text.trim().length > 0;
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
+
+  // Afasta o campo da barra de navegação do sistema; com o teclado aberto ela fica coberta e o recuo sobra.
+  const bottomPadding = 8 + (keyboardVisible ? 0 : insets.bottom);
 
   function toggleMention(user: ChatUser) {
     setMentionedUserIds((current) =>
@@ -55,7 +70,7 @@ export function ChatInput({ onSend, disabled, mentionableMembers }: ChatInputPro
         </ScrollView>
       ) : null}
 
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: bottomPadding }]}>
         <TextInput
           style={styles.input}
           value={text}

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Text, Pressable, StyleSheet, ScrollView } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../hooks/useAuth';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { TextField } from '../components/TextField';
@@ -23,6 +24,7 @@ export function RegisterScreen({ navigation }: Props) {
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const insets = useSafeAreaInsets();
 
   async function pickPhoto() {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -71,7 +73,10 @@ export function RegisterScreen({ navigation }: Props) {
   const isValid = name && email && password && confirmPassword && phoneNumber && birthDate;
 
   return (
-    <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+    <ScrollView
+      contentContainerStyle={[styles.container, { paddingTop: 48 + insets.top, paddingBottom: 24 + insets.bottom }]}
+      keyboardShouldPersistTaps="handled"
+    >
       <Text style={styles.title}>Criar conta</Text>
       <Text style={styles.subtitle}>Preencha seus dados para começar a conversar</Text>
 

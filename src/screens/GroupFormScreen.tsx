@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../hooks/useAuth';
 import { useGroups } from '../hooks/useGroups';
 import { getGroup } from '../services/groupService';
@@ -59,6 +60,7 @@ export function GroupFormScreen({ navigation, route }: Props) {
   const [memberLimit, setMemberLimit] = useState('5');
   const [policy, setPolicy] = useState<NotificationPolicy>('all_group_messages');
   const [formError, setFormError] = useState<string | null>(null);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (route.params?.selectedMemberIds) {
@@ -156,7 +158,10 @@ export function GroupFormScreen({ navigation, route }: Props) {
   const slots = availableSlots(limitNumber, isEditing ? memberIds : [...memberIds, 'owner']);
 
   return (
-    <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+    <ScrollView
+      contentContainerStyle={[styles.container, { paddingBottom: 20 + insets.bottom }]}
+      keyboardShouldPersistTaps="handled"
+    >
       <Text style={styles.title}>{isEditing ? `Editar ${existingGroup?.name ?? 'grupo'}` : 'Novo grupo'}</Text>
 
       {!isEditing ? (

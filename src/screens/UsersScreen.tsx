@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, FlatList, Pressable, ActivityIndicator, StyleSheet } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../hooks/useAuth';
 import { useUsers } from '../hooks/useUsers';
 import { useGroups } from '../hooks/useGroups';
@@ -28,6 +29,7 @@ export function UsersScreen({ navigation, route }: Props) {
   const [selectedIds, setSelectedIds] = useState<string[]>(initialSelectedIds);
   const [startingChatWith, setStartingChatWith] = useState<string | null>(null);
   const [chatError, setChatError] = useState<string | null>(null);
+  const insets = useSafeAreaInsets();
 
   function toggleSelection(uid: string) {
     setSelectedIds((current) =>
@@ -124,7 +126,7 @@ export function UsersScreen({ navigation, route }: Props) {
       />
 
       {selectForGroup ? (
-        <View style={styles.footer}>
+        <View style={[styles.footer, { paddingBottom: 12 + insets.bottom }]}>
           <ErrorMessage message={error} />
           <Button
             label={saving ? 'Salvando...' : `Confirmar seleção (${selectedIds.length})`}

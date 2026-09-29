@@ -2,6 +2,7 @@ import React, { useCallback, useLayoutEffect, useState } from 'react';
 import { View, Text, FlatList, Pressable, StyleSheet } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../hooks/useAuth';
 import { useGroups } from '../hooks/useGroups';
 import { getGroup } from '../services/groupService';
@@ -27,6 +28,7 @@ export function GroupMembersScreen({ navigation, route }: Props) {
   const [members, setMembers] = useState<ChatUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const insets = useSafeAreaInsets();
 
   const load = useCallback(async () => {
     setLoadError(null);
@@ -121,7 +123,7 @@ export function GroupMembersScreen({ navigation, route }: Props) {
           onPress={() =>
             navigation.navigate('Users', { selectForGroup: true, initialSelectedIds: group.memberIds, groupId: group.id })
           }
-          style={styles.addButton}
+          style={[styles.addButton, { marginBottom: 12 + insets.bottom }]}
         />
       ) : null}
     </View>

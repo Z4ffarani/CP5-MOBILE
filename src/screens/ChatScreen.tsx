@@ -1,6 +1,7 @@
-import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
-import { View, Text, FlatList, Pressable, StyleSheet } from 'react-native';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { View, Text, FlatList, Pressable, KeyboardAvoidingView, StyleSheet } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useHeaderHeight } from '@react-navigation/elements';
 import { useAuth } from '../hooks/useAuth';
 import { useChat } from '../hooks/useChat';
 import { Avatar } from '../components/Avatar';
@@ -14,6 +15,7 @@ import { getUserProfile } from '../services/userService';
 import { colors } from '../theme/colors';
 import type { RootStackParamList } from '../types/navigation';
 import type { ChatUser } from '../types/user';
+import type { ChatMessage as ChatMessageType } from '../types/chat';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
@@ -25,6 +27,8 @@ export function ChatScreen({ navigation, route }: Props) {
   const [photoUrl, setPhotoUrl] = useState<string | undefined>(undefined);
   const [otherUid, setOtherUid] = useState<string | null>(null);
   const [members, setMembers] = useState<Record<string, ChatUser>>({});
+  const listRef = useRef<FlatList<ChatMessageType>>(null);
+  const headerHeight = useHeaderHeight();
 
   useEffect(() => {
     if (!profile) return;
@@ -90,7 +94,9 @@ export function ChatScreen({ navigation, route }: Props) {
     });
   }, [navigation, title, photoUrl, otherUid, conversationType]);
 
-  const orderedForList = useMemo(() => [...messages].reverse(), [messages]);
+  const scrollToLatest = useCallback((animated: boolean) => {
+    listRef.current?.scrollToEnd({ animated });
+  }, []);
 
   async function handleSend(text: string, mentionedUserIds: string[]) {
     try {
@@ -102,14 +108,18 @@ export function ChatScreen({ navigation, route }: Props) {
   }
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView style={styles.container} behavior="padding" keyboardVerticalOffset={headerHeight}>
       <ErrorMessage message={error} />
 
+      {/* Lista em ordem cronológica (sem `inverted`, que espelha o conteúdo e se comporta diferente entre
+          versões e plataformas); ao receber mensagens ela rola até a mais recente. */}
       <FlatList
-        data={orderedForList}
+        ref={listRef}
+        data={messages}
         keyExtractor={(item) => item.id}
-        inverted
         contentContainerStyle={styles.listContent}
+        onContentSizeChange={() => scrollToLatest(true)}
+        onLayout={() => scrollToLatest(false)}
         renderItem={({ item }) => (
           <ChatMessage
             message={item}
@@ -130,7 +140,7 @@ export function ChatScreen({ navigation, route }: Props) {
           conversationType === 'group' ? Object.values(members).filter((member) => member.uid !== profile?.uid) : undefined
         }
       />
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -147,7 +157,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    transform: [{ scaleY: -1 }],
   },
   headerTitle: {
     flexDirection: 'row',
