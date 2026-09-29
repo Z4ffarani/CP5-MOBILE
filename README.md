@@ -205,3 +205,47 @@ _A adicionar após os testes em dispositivo físico._
 ## Hooks e organização
 
 Hooks customizados (`useAuth`, `useChat`, `useGroups`, `useUsers`, `useConversations`, `useNotifications`) encapsulam `useState`, `useEffect`, `useMemo` e `useCallback` com finalidade real, conforme exigido. O projeto não utiliza `any` em nenhum ponto do código.
+
+## Checklist de requisitos
+
+- [x] React Native, Expo SDK 55+ e TypeScript
+- [x] Cadastro e login apenas com e-mail/senha
+- [x] Cadastro com nome, celular, data de nascimento e foto de perfil
+- [x] Logout e recuperação de sessão
+- [x] Conversas individuais com exatamente dois participantes
+- [x] Perfil acessível pela foto do participante
+- [x] Criação e edição de grupos
+- [x] Foto do grupo e listagem de seus integrantes
+- [x] Perfil acessível pela lista de integrantes do grupo
+- [x] Proprietário e integrantes identificados por `uid`
+- [x] Limite configurável de integrantes
+- [x] Proteção contra estouro do limite em ações concorrentes
+- [x] Mensagens no Realtime Database
+- [x] Perfis, grupos e configurações no Firestore
+- [x] Imagens armazenadas em serviço apropriado e apenas suas URLs salvas no Firestore
+- [x] Atualização de mensagens em tempo real
+- [ ] Firebase Cloud Messaging configurado — código pronto (`expo-notifications` + Expo Push Service); pendente ativar o projeto Firebase real e testar em dispositivo físico
+- [x] Tokens de dispositivos armazenados com segurança
+- [x] API online autenticada com Firebase ID Token
+- [ ] API publicada em URL pública com HTTPS — pendente escolher e executar a hospedagem
+- [ ] API funciona sem servidor local ou inicialização pelo professor — depende da publicação acima
+- [x] Push enviado pela API, sem utilização de Cloud Functions
+- [x] Política `all_group_messages`
+- [x] Política `mentioned_members`
+- [x] Política `direct_messages_only`
+- [x] Política `disabled`
+- [x] Remetente excluído dos destinatários do próprio push
+- [x] Toque na notificação abre a conversa correta
+- [x] Regras de segurança do Firestore e Realtime Database — escritas em `firestore.rules` e `database.rules.json`; pendente publicá-las no Console
+- [x] Loading, estados vazios e tratamento de erros
+- [x] Hooks obrigatórios utilizados com finalidade real
+- [x] Projeto sem `any`
+- [x] Services e componentes separados
+- [ ] README completo com prints e configuração — falta anexar capturas de tela e evidência de notificação após teste em dispositivo
+- [x] README com nome e RM de todos os integrantes
+- [x] Arquivo `firebaseConfig.json` presente no repositório — pendente substituir os valores de exemplo pelos do projeto real
+- [x] `firebaseConfig.json` sem credenciais administrativas ou chaves privadas
+- [x] Arquivos `.env.example` presentes e sem segredos reais
+- [x] Credencial administrativa fora do aplicativo e do GitHub
+- [ ] Segredos administrativos configurados somente na hospedagem da API — depende da publicação da API
+- [x] Repositório acessível no GitHub
