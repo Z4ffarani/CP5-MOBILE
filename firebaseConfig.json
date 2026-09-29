@@ -1,9 +1,9 @@
 {
-  "apiKey": "REPLACE_WITH_FIREBASE_API_KEY",
-  "authDomain": "REPLACE_WITH_PROJECT_ID.firebaseapp.com",
-  "databaseURL": "https://REPLACE_WITH_PROJECT_ID-default-rtdb.firebaseio.com",
-  "projectId": "REPLACE_WITH_PROJECT_ID",
-  "storageBucket": "REPLACE_WITH_PROJECT_ID.appspot.com",
-  "messagingSenderId": "REPLACE_WITH_SENDER_ID",
-  "appId": "REPLACE_WITH_APP_ID"
+  "apiKey": "AIzaSyBWuYG0DEbA0zwrAdszxA3lt2L2l7bt_vs",
+  "authDomain": "cp5-mobile-c3975.firebaseapp.com",
+  "databaseURL": "https://cp5-mobile-c3975-default-rtdb.firebaseio.com",
+  "projectId": "cp5-mobile-c3975",
+  "storageBucket": "cp5-mobile-c3975.firebasestorage.app",
+  "messagingSenderId": "993688233608",
+  "appId": "1:993688233608:web:4dc43d9643d43a7c5f213d"
 }

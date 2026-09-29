@@ -83,11 +83,10 @@ Abra no Android/iOS pelo Expo Go escaneando o QR Code, ou execute `npx expo star
 1. Crie um projeto em https://console.firebase.google.com.
 2. **Authentication** → Sign-in method → ative apenas **E-mail/senha**.
 3. **Firestore Database** → Create database → modo produção.
-4. **Realtime Database** → Create database → modo bloqueado (locked mode).
-5. **Storage** → Get started → modo produção.
-6. **Project settings → General → Your apps** → adicione um app Web (ícone `</>`) e copie os valores gerados para o arquivo `firebaseConfig.json` na raiz do repositório.
-7. **Project settings → Service accounts** → Generate new private key. Esse arquivo **não é versionado**; os valores (`project_id`, `client_email`, `private_key`) vão diretamente nas variáveis de ambiente da hospedagem da API (nunca no aplicativo ou no GitHub).
-8. Publique as regras de segurança:
+4. **Storage** → Get started → modo produção.
+5. **Project settings → General → Your apps** → adicione um app Web (ícone `</>`) e copie os valores gerados para o arquivo `firebaseConfig.json` na raiz do repositório.
+6. **Project settings → Service accounts** → Generate new private key. Esse arquivo **não é versionado**; os valores (`project_id`, `client_email`, `private_key`) vão diretamente nas variáveis de ambiente da hospedagem da API (nunca no aplicativo ou no GitHub).
+7. Publique as regras de segurança:
    - Firestore: cole o conteúdo de `firestore.rules` em Firestore Database → Regras.
    - Realtime Database: cole o conteúdo de `database.rules.json` em Realtime Database → Regras.
 
@@ -208,23 +207,37 @@ Hooks customizados (`useAuth`, `useChat`, `useGroups`, `useUsers`, `useConversat
 
 ## Checklist de requisitos
 
+### 🔐 Autenticação
+
 - [x] React Native, Expo SDK 55+ e TypeScript
 - [x] Cadastro e login apenas com e-mail/senha
 - [x] Cadastro com nome, celular, data de nascimento e foto de perfil
 - [x] Logout e recuperação de sessão
+
+### 💬 Conversas e grupos
+
 - [x] Conversas individuais com exatamente dois participantes
 - [x] Perfil acessível pela foto do participante
 - [x] Criação e edição de grupos
 - [x] Foto do grupo e listagem de seus integrantes
 - [x] Perfil acessível pela lista de integrantes do grupo
 - [x] Proprietário e integrantes identificados por `uid`
+
+### 👥 Limite configurável de integrantes
+
 - [x] Limite configurável de integrantes
 - [x] Proteção contra estouro do limite em ações concorrentes
+
+### 📨 Mensagens e tempo real
+
 - [x] Mensagens no Realtime Database
 - [x] Perfis, grupos e configurações no Firestore
 - [x] Imagens armazenadas em serviço apropriado e apenas suas URLs salvas no Firestore
 - [x] Atualização de mensagens em tempo real
-- [ ] Firebase Cloud Messaging configurado — código pronto (`expo-notifications` + Expo Push Service); pendente ativar o projeto Firebase real e testar em dispositivo físico
+
+### 🔔 Notificações push
+
+- [ ] Firebase Cloud Messaging configurado — código pronto (`expo-notifications` + Expo Push Service); falta testar em dispositivo físico
 - [x] Tokens de dispositivos armazenados com segurança
 - [x] API online autenticada com Firebase ID Token
 - [ ] API publicada em URL pública com HTTPS — pendente escolher e executar a hospedagem
@@ -236,16 +249,25 @@ Hooks customizados (`useAuth`, `useChat`, `useGroups`, `useUsers`, `useConversat
 - [x] Política `disabled`
 - [x] Remetente excluído dos destinatários do próprio push
 - [x] Toque na notificação abre a conversa correta
+
+### 🔒 Segurança
+
 - [x] Regras de segurança do Firestore e Realtime Database — escritas em `firestore.rules` e `database.rules.json`; pendente publicá-las no Console
+
+### 🔷 TypeScript, hooks e organização
+
 - [x] Loading, estados vazios e tratamento de erros
 - [x] Hooks obrigatórios utilizados com finalidade real
 - [x] Projeto sem `any`
 - [x] Services e componentes separados
+
+### 📄 Documentação e entrega
+
 - [ ] README completo com prints e configuração — falta anexar capturas de tela e evidência de notificação após teste em dispositivo
 - [x] README com nome e RM de todos os integrantes
-- [x] Arquivo `firebaseConfig.json` presente no repositório — pendente substituir os valores de exemplo pelos do projeto real
+- [x] Arquivo `firebaseConfig.json` presente no repositório, com os valores reais do projeto
 - [x] `firebaseConfig.json` sem credenciais administrativas ou chaves privadas
 - [x] Arquivos `.env.example` presentes e sem segredos reais
 - [x] Credencial administrativa fora do aplicativo e do GitHub
-- [ ] Segredos administrativos configurados somente na hospedagem da API — depende da publicação da API
+- [ ] Segredos administrativos configurados somente na hospedagem da API — já isolados em `server/.env` local; falta configurar na hospedagem definitiva
 - [x] Repositório acessível no GitHub

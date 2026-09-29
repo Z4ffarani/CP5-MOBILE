@@ -52,3 +52,8 @@ server/dist/
 firebase-debug.log
 firestore-debug.log
 ui-debug.log
+
+# firebase admin credentials (never commit)
+*firebase-adminsdk*.json
+serviceAccountKey.json
+firebaseAdminCredentials.json
