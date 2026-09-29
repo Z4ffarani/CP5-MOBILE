@@ -6,7 +6,9 @@ import {
   logout as logoutService,
   register as registerService,
   getCurrentUser,
+  isSessionValid,
 } from '../services/authService';
+import { withTimeout } from '../utils/withTimeout';
 import { getUserProfile } from '../services/userService';
 import { registerDeviceForPush, unregisterDeviceForPush } from '../services/notificationService';
 import type { ChatUser, LoginInput, RegisterInput } from '../types/user';
@@ -24,6 +26,8 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+const PROFILE_TIMEOUT_MS = 10000;
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
@@ -44,8 +48,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      // Sessão salva de uma conta excluída ou desativada: sai da conta em vez de tentar carregar o perfil,
+      // o que deixaria o app preso no carregamento. O observador é chamado de novo com user = null.
+      if (!(await isSessionValid(user))) {
+        setError('Sua sessão expirou ou a conta não existe mais. Entre novamente.');
+        await logoutService();
+        return;
+      }
+
       try {
-        setProfile(await getUserProfile(user.uid));
+        setProfile(await withTimeout(getUserProfile(user.uid), PROFILE_TIMEOUT_MS));
       } catch {
         setError('Não foi possível carregar seu perfil. Verifique sua conexão.');
       } finally {

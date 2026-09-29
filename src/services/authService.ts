@@ -54,6 +54,25 @@ export async function logout(): Promise<void> {
   await signOut(auth);
 }
 
+const INVALID_SESSION_CODES = new Set([
+  'auth/user-not-found',
+  'auth/user-disabled',
+  'auth/user-token-expired',
+  'auth/invalid-user-token',
+]);
+
+// Confere no servidor se a sessão salva ainda vale (a conta pode ter sido excluída ou desativada).
+// Falhas de rede não invalidam a sessão: o usuário continua logado e o app tenta de novo depois.
+export async function isSessionValid(user: User): Promise<boolean> {
+  try {
+    await user.getIdToken(true);
+    return true;
+  } catch (err) {
+    const code = typeof err === 'object' && err !== null && 'code' in err ? String(err.code) : '';
+    return !INVALID_SESSION_CODES.has(code);
+  }
+}
+
 export function observeAuthState(callback: (user: User | null) => void): Unsubscribe {
   return onAuthStateChanged(auth, callback);
 }
