@@ -8,14 +8,14 @@ import {
 } from 'firebase/auth';
 import { auth } from './firebase';
 import { createUserProfile } from './userService';
-import { uploadPhoto, userPhotoPath } from './storageService';
+import { uploadUserPhoto } from './storageService';
 import type { ChatUser, LoginInput, RegisterInput } from '../types/user';
 
 export async function register(input: RegisterInput): Promise<ChatUser> {
   const credential = await createUserWithEmailAndPassword(auth, input.email, input.password);
   const uid = credential.user.uid;
 
-  const photoUrl = input.photoUri ? await uploadPhoto(input.photoUri, userPhotoPath(uid)) : '';
+  const photoUrl = input.photoUri ? await uploadUserPhoto(uid, input.photoUri) : '';
 
   const profile: ChatUser = {
     uid,

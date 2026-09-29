@@ -2,6 +2,7 @@ import express, { type Express, type NextFunction, type Request, type Response }
 import cors from 'cors';
 import { healthRouter } from './routes/health';
 import { notificationsRouter } from './routes/notifications';
+import { photosRouter } from './routes/photos';
 
 export function createApp(): Express {
   const app = express();
@@ -11,6 +12,7 @@ export function createApp(): Express {
 
   app.use('/health', healthRouter);
   app.use('/notifications', notificationsRouter);
+  app.use('/photos', photosRouter);
 
   app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
     console.error(err);

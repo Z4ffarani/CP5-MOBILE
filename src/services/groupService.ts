@@ -12,7 +12,7 @@ import {
   arrayRemove,
 } from 'firebase/firestore';
 import { firestore } from './firebase';
-import { uploadPhoto, groupPhotoPath } from './storageService';
+import { uploadGroupPhoto } from './storageService';
 import { isValidMemberLimit, hasAvailableSlot } from '../utils/groupValidation';
 import type { ChatGroup, CreateGroupInput, NotificationPolicy } from '../types/group';
 
@@ -28,7 +28,7 @@ export async function createGroup(ownerId: string, input: CreateGroupInput): Pro
   const groupRef = doc(collection(firestore, GROUPS_COLLECTION));
   const now = Date.now();
 
-  const photoUrl = input.photoUri ? await uploadPhoto(input.photoUri, groupPhotoPath(groupRef.id)) : '';
+  const photoUrl = input.photoUri ? await uploadGroupPhoto(groupRef.id, input.photoUri) : '';
 
   const group: ChatGroup = {
     id: groupRef.id,

@@ -3,7 +3,6 @@ import { initializeAuth, getAuth, type Auth, type Persistence } from 'firebase/a
 import * as FirebaseAuthRN from '@firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 import { getDatabase, type Database } from 'firebase/database';
-import { getStorage, type FirebaseStorage } from 'firebase/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import firebaseConfig from '../../firebaseConfig.json';
 
@@ -25,5 +24,4 @@ try {
 export const auth: Auth = authInstance;
 export const firestore: Firestore = getFirestore(app);
 export const rtdb: Database = getDatabase(app);
-export const storage: FirebaseStorage = getStorage(app);
 export default app;

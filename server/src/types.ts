@@ -20,6 +20,7 @@ export type ChatMessageRecord = {
 };
 
 export type ChatGroupRecord = {
+  ownerId: string;
   memberIds: string[];
   notificationPolicy: NotificationPolicy;
 };

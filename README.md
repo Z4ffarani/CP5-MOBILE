@@ -1,6 +1,6 @@
 # WhatChat
 
-Aplicativo de chat individual e em grupo, desenvolvido em React Native (Expo) com TypeScript, usando Firebase como backend e uma API própria em Node.js/Express para o envio seguro de notificações push.
+Aplicativo de chat individual e em grupo, desenvolvido em React Native (Expo) com TypeScript, usando Firebase como backend e uma API própria em Node.js/Express (hospedada no Railway) para o envio seguro de notificações push e para o armazenamento de fotos.
 
 ## Integrantes
 
@@ -17,10 +17,10 @@ Aplicativo de chat individual e em grupo, desenvolvido em React Native (Expo) co
 - Firebase Authentication
 - Cloud Firestore
 - Firebase Realtime Database
-- Firebase Storage
 - Firebase Cloud Messaging / Expo Notifications
-- Node.js com Express (API de notificações)
+- Node.js com Express (API de notificações e fotos)
 - Firebase Admin SDK (API)
+- Railway (hospedagem da API e Storage Bucket S3-compatível para fotos)
 
 ## Serviços Firebase e responsabilidade de cada um
 
@@ -29,8 +29,9 @@ Aplicativo de chat individual e em grupo, desenvolvido em React Native (Expo) co
 | Firebase Authentication | Cadastro e login por e-mail e senha, sessão do usuário, `uid`. |
 | Cloud Firestore | Perfis de usuário, grupos e seus metadados, integrantes, limite de integrantes, política de notificações, tokens de dispositivo. |
 | Firebase Realtime Database | Mensagens individuais e em grupo, sincronizadas em tempo real. |
-| Firebase Storage | Armazenamento das fotos de perfil e de grupo. Apenas a URL final é salva no Firestore. |
 | Firebase Cloud Messaging | Entrega das notificações push calculadas e enviadas pela API própria. |
+
+> O armazenamento de fotos **não usa o Firebase Storage** — ele exige o plano pago (Blaze) do projeto para provisionar um bucket novo. Optou-se por um Railway Bucket (S3-compatível), conforme expressamente permitido pelo enunciado ("Firebase Storage é recomendado, mas outra solução poderá ser utilizada"). Detalhes na seção [Armazenamento de fotos](#armazenamento-de-fotos).
 
 ## Estrutura do projeto
 
@@ -38,7 +39,7 @@ Aplicativo de chat individual e em grupo, desenvolvido em React Native (Expo) co
 src/
   components/   Componentes de UI reutilizáveis
   screens/      Telas do aplicativo
-  services/     Integração com Firebase (Auth, Firestore, RTDB, Storage) e com a API
+  services/     Integração com Firebase (Auth, Firestore, RTDB) e com a API (notificações e fotos)
   hooks/        Hooks customizados (useAuth, useChat, useGroups, useNotifications, ...)
   contexts/      AuthContext
   types/        Tipagem (usuário, chat, grupo, notificação, navegação)
@@ -54,11 +55,13 @@ server/
       authenticate.ts     Validação do Firebase ID Token
     routes/
       notifications.ts    Endpoint de envio de notificações
+      photos.ts            Upload e leitura de fotos (proxy do Railway Bucket)
       health.ts           Health check
     services/
       firebaseAdmin.ts     Inicialização do Firebase Admin SDK
       notificationSender.ts Envio via Expo Push Service
       recipientResolver.ts  Cálculo dos destinatários permitidos
+      storageBucket.ts      Upload e URLs assinadas do Railway Bucket (S3-compatível)
 
 firestore.rules          Regras de segurança do Cloud Firestore
 database.rules.json      Regras de segurança do Realtime Database
@@ -84,10 +87,9 @@ Abra no Android/iOS pelo Expo Go escaneando o QR Code, ou execute `npx expo star
 1. Crie um projeto em https://console.firebase.google.com.
 2. **Authentication** → Sign-in method → ative apenas **E-mail/senha**.
 3. **Firestore Database** → Create database → modo produção.
-4. **Storage** → Get started → modo produção.
-5. **Project settings → General → Your apps** → adicione um app Web (ícone `</>`) e copie os valores gerados para o arquivo `firebaseConfig.json` na raiz do repositório.
-6. **Project settings → Service accounts** → Generate new private key. Esse arquivo **não é versionado**; os valores (`project_id`, `client_email`, `private_key`) vão diretamente nas variáveis de ambiente da hospedagem da API (nunca no aplicativo ou no GitHub).
-7. Publique as regras de segurança:
+4. **Project settings → General → Your apps** → adicione um app Web (ícone `</>`) e copie os valores gerados para o arquivo `firebaseConfig.json` na raiz do repositório.
+5. **Project settings → Service accounts** → Generate new private key. Esse arquivo **não é versionado**; os valores (`project_id`, `client_email`, `private_key`) vão diretamente nas variáveis de ambiente da hospedagem da API (nunca no aplicativo ou no GitHub).
+6. Publique as regras de segurança:
    - Firestore: cole o conteúdo de `firestore.rules` em Firestore Database → Regras.
    - Realtime Database: cole o conteúdo de `database.rules.json` em Realtime Database → Regras.
 
@@ -109,7 +111,16 @@ Contém apenas a configuração pública do SDK cliente (não concede privilégi
 
 ## Armazenamento de fotos
 
-As fotos de perfil e de grupo são enviadas para o **Firebase Storage** (`src/services/storageService.ts`), em `users/{uid}/profile.jpg` e `groups/{groupId}/photo.jpg`. Apenas a URL de download resultante é salva no Firestore; nenhuma imagem é armazenada em Base64.
+As fotos de perfil e de grupo são armazenadas em um **Railway Bucket** (object storage S3-compatível), não no Firebase Storage — que exige o plano pago (Blaze) só para provisionar um bucket novo. O enunciado permite explicitamente outra solução além do Firebase Storage, desde que documentada.
+
+Fluxo:
+
+1. O app (`src/services/storageService.ts`) envia a foto via `multipart/form-data` para `POST /photos/:scope/:id` na API, autenticado com o Firebase ID Token.
+2. A API (`server/src/routes/photos.ts`) valida o token, confere se o usuário pode alterar aquela foto (a própria, no caso de perfil; ou é o proprietário, no caso de grupo) e grava o arquivo no bucket (`server/src/services/storageBucket.ts`), em `users/{uid}/profile.jpg` ou `groups/{groupId}/photo.jpg`.
+3. A API responde com uma URL estável e permanente da própria API (`https://whatchat-api-production.up.railway.app/photos/{scope}/{id}`) — **é essa URL, e só ela, que é salva no Firestore**, nunca a imagem em si.
+4. Como buckets do Railway são privados, quando alguém acessa essa URL a API gera uma URL assinada (válida por 1h) apontando direto para o bucket e redireciona (`302`) para ela. A URL salva no Firestore nunca expira; apenas o redirecionamento interno é renovado a cada carregamento.
+
+Nenhuma imagem é armazenada em Base64 no Firestore ou no Realtime Database.
 
 ## Notificações push
 
@@ -163,10 +174,13 @@ npm run dev
 | `FIREBASE_CLIENT_EMAIL` | E-mail da conta de serviço (Admin SDK). |
 | `FIREBASE_PRIVATE_KEY` | Chave privada da conta de serviço. Configurar somente na hospedagem, nunca versionar. |
 | `FIREBASE_DATABASE_URL` | URL do Realtime Database do projeto. |
+| `S3_BUCKET` | Nome do bucket S3-compatível (Railway Bucket). |
+| `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` | Credenciais do bucket. |
+| `S3_REGION` / `S3_ENDPOINT` | Região e endpoint do bucket. |
 
 ### Publicação
 
-A API está publicada no **Railway**, a partir do diretório `server/` deste mesmo repositório (deploy automático a cada push em `main`). As variáveis `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, `FIREBASE_DATABASE_URL` e `PORT` estão configuradas como segredos do serviço na hospedagem, nunca no repositório.
+A API está publicada no **Railway**, a partir do diretório `server/` deste mesmo repositório (deploy automático a cada push em `main`). As variáveis do Firebase Admin SDK e as credenciais do bucket de fotos (esta última referenciada diretamente do Railway Bucket do mesmo projeto) estão configuradas como segredos do serviço na hospedagem, nunca no repositório.
 
 **URL pública da API:** https://whatchat-api-production.up.railway.app
 
@@ -176,6 +190,8 @@ A API está publicada no **Railway**, a partir do diretório `server/` deste mes
 |---|---|---|
 | `GET` | `/health` | Health check — retorna `{ status: "ok" }` quando a API está no ar. |
 | `POST` | `/notifications/messages` | Recebe `{ conversationId, messageId }` com `Authorization: Bearer <firebase-id-token>` e envia as notificações aos destinatários permitidos. |
+| `POST` | `/photos/:scope/:id` | `scope` é `users` ou `groups`. Recebe o arquivo (`multipart/form-data`, campo `file`) autenticado com o Firebase ID Token, grava no bucket e retorna `{ url }`. |
+| `GET` | `/photos/:scope/:id` | Redireciona (`302`) para uma URL assinada e temporária do bucket — é o endereço salvo no Firestore como `photoUrl`. |
 
 Verificação de disponibilidade: `GET https://whatchat-api-production.up.railway.app/health` responde `200 OK` com `{ "status": "ok" }`.
 
