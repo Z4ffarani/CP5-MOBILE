@@ -71,6 +71,7 @@ Pré-requisitos: Node.js 18+, npm, Expo Go (para testes rápidos) ou um developm
 
 ```bash
 npm install
+cp .env.example .env   # já preenchido com a URL pública da API neste repositório
 npx expo start
 ```
 
@@ -165,14 +166,9 @@ npm run dev
 
 ### Publicação
 
-```bash
-npm run build
-npm start
-```
+A API está publicada no **Railway**, a partir do diretório `server/` deste mesmo repositório (deploy automático a cada push em `main`). As variáveis `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, `FIREBASE_DATABASE_URL` e `PORT` estão configuradas como segredos do serviço na hospedagem, nunca no repositório.
 
-Publique o conteúdo de `server/` em um serviço à sua escolha (Render, Railway, Fly.io etc.), configurando as variáveis acima como segredos da hospedagem.
-
-**URL pública da API:** `A_DEFINIR_APOS_DEPLOY`
+**URL pública da API:** https://whatchat-api-production.up.railway.app
 
 ### Endpoints
 
@@ -181,7 +177,7 @@ Publique o conteúdo de `server/` em um serviço à sua escolha (Render, Railway
 | `GET` | `/health` | Health check — retorna `{ status: "ok" }` quando a API está no ar. |
 | `POST` | `/notifications/messages` | Recebe `{ conversationId, messageId }` com `Authorization: Bearer <firebase-id-token>` e envia as notificações aos destinatários permitidos. |
 
-Verificação de disponibilidade: `GET https://<url-publicada>/health` deve responder `200 OK`.
+Verificação de disponibilidade: `GET https://whatchat-api-production.up.railway.app/health` responde `200 OK` com `{ "status": "ok" }`.
 
 ## Proteção do limite de integrantes contra concorrência
 
@@ -237,11 +233,11 @@ Hooks customizados (`useAuth`, `useChat`, `useGroups`, `useUsers`, `useConversat
 
 ### 🔔 Notificações push
 
-- [ ] Firebase Cloud Messaging configurado — código pronto (`expo-notifications` + Expo Push Service); falta testar em dispositivo físico
+- [ ] Firebase Cloud Messaging configurado — projeto Firebase real ativo (Auth, Firestore e RTDB confirmados); falta testar o recebimento em dispositivo físico
 - [x] Tokens de dispositivos armazenados com segurança
 - [x] API online autenticada com Firebase ID Token
-- [ ] API publicada em URL pública com HTTPS — pendente escolher e executar a hospedagem
-- [ ] API funciona sem servidor local ou inicialização pelo professor — depende da publicação acima
+- [x] API publicada em URL pública com HTTPS — https://whatchat-api-production.up.railway.app
+- [x] API funciona sem servidor local ou inicialização pelo professor — hospedada no Railway, deploy automático a partir do GitHub
 - [x] Push enviado pela API, sem utilização de Cloud Functions
 - [x] Política `all_group_messages`
 - [x] Política `mentioned_members`
@@ -269,5 +265,5 @@ Hooks customizados (`useAuth`, `useChat`, `useGroups`, `useUsers`, `useConversat
 - [x] `firebaseConfig.json` sem credenciais administrativas ou chaves privadas
 - [x] Arquivos `.env.example` presentes e sem segredos reais
 - [x] Credencial administrativa fora do aplicativo e do GitHub
-- [ ] Segredos administrativos configurados somente na hospedagem da API — já isolados em `server/.env` local; falta configurar na hospedagem definitiva
+- [x] Segredos administrativos configurados somente na hospedagem da API — variáveis definidas diretamente no serviço do Railway
 - [x] Repositório acessível no GitHub
