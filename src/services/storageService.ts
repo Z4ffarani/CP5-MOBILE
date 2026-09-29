@@ -31,11 +31,10 @@ async function appendPhoto(formData: FormData, localUri: string): Promise<void> 
     return;
   }
 
-  formData.append('file', {
-    uri: localUri,
-    name: 'photo.jpg',
-    type: 'image/jpeg',
-  } as unknown as Blob);
+  // No aparelho o fetch global é o expo/fetch, que não aceita o formato { uri, name, type } do FormData do
+  // React Native; o arquivo precisa ir como Blob, e o File do expo-file-system implementa Blob.
+  const { File } = await import('expo-file-system');
+  formData.append('file', new File(localUri), 'photo.jpg');
 }
 
 async function uploadPhoto(scope: 'users' | 'groups', id: string, localUri: string): Promise<string> {
