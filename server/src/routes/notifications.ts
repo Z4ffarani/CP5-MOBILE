@@ -1,6 +1,7 @@
 import { Router, type Response } from 'express';
 import { authenticate, type AuthenticatedRequest } from '../middleware/authenticate';
 import { adminDatabase } from '../services/firebaseAdmin';
+import { loadConversation } from '../services/conversationAccess';
 import { resolveRecipients } from '../services/recipientResolver';
 import { sendPushNotifications } from '../services/notificationSender';
 import type { ChatMessageRecord } from '../types';
@@ -31,6 +32,13 @@ notificationsRouter.post('/messages', authenticate, async (req, res: Response) =
     return;
   }
 
+  const conversation = await loadConversation(conversationId);
+
+  if (!conversation || conversation.type !== message.conversationType || !conversation.participantIds.includes(uid)) {
+    res.status(403).json({ error: 'O remetente não participa desta conversa.' });
+    return;
+  }
+
   const notifiedRef = adminDatabase.ref(`messages/${conversationId}/${messageId}/notified`);
   const transactionResult = await notifiedRef.transaction((current) => {
     if (current === true) return undefined;
@@ -42,7 +50,7 @@ notificationsRouter.post('/messages', authenticate, async (req, res: Response) =
     return;
   }
 
-  const recipients = await resolveRecipients(message);
+  const recipients = resolveRecipients(conversation, message);
   await sendPushNotifications(recipients, message);
 
   res.status(200).json({ status: 'sent', recipients: recipients.length });

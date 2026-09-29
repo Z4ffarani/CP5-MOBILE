@@ -15,7 +15,8 @@ export type ChatMessageRecord = {
   senderId: string;
   text: string;
   target: MessageTarget;
-  mentionedUserIds: string[];
+  // O Realtime Database não armazena arrays vazios, então o campo pode vir ausente na leitura.
+  mentionedUserIds?: string[];
   createdAt: number;
 };
 
@@ -24,6 +25,10 @@ export type ChatGroupRecord = {
   memberIds: string[];
   notificationPolicy: NotificationPolicy;
 };
+
+export type ConversationContext =
+  | { type: 'direct'; participantIds: string[] }
+  | { type: 'group'; participantIds: string[]; notificationPolicy: NotificationPolicy };
 
 export type DeviceTokenRecord = {
   token: string;

@@ -69,15 +69,23 @@ export async function sendMessage(params: {
 export function listenToMessages(
   conversationId: string,
   onMessages: (messages: ChatMessage[]) => void,
+  onAccessError: () => void,
 ): () => void {
   const messagesQuery = rtdbQuery(ref(rtdb, `messages/${conversationId}`), orderByChild('createdAt'));
 
-  return onValue(messagesQuery, (snapshot) => {
-    const messages: ChatMessage[] = [];
-    snapshot.forEach((child) => {
-      messages.push(child.val() as ChatMessage);
-      return false;
-    });
-    onMessages(messages);
-  });
+  return onValue(
+    messagesQuery,
+    (snapshot) => {
+      const messages: ChatMessage[] = [];
+      snapshot.forEach((child) => {
+        const message = child.val() as ChatMessage;
+        // O Realtime Database não armazena arrays vazios, então o campo pode vir ausente.
+        messages.push({ ...message, mentionedUserIds: message.mentionedUserIds ?? [] });
+        return false;
+      });
+      onMessages(messages);
+    },
+    // Chamado quando as regras negam a leitura, por exemplo depois que o integrante é removido do grupo.
+    onAccessError,
+  );
 }

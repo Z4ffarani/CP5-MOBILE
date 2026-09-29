@@ -29,9 +29,8 @@ async function collectTokens(uids: string[]): Promise<{ uid: string; token: stri
   return results.flat();
 }
 
-async function disableToken(token: string): Promise<void> {
-  const snapshot = await adminFirestore.collectionGroup('devices').where('token', '==', token).get();
-  await Promise.all(snapshot.docs.map((docSnapshot) => docSnapshot.ref.update({ enabled: false })));
+async function disableToken(uid: string, token: string): Promise<void> {
+  await adminFirestore.collection('users').doc(uid).collection('devices').doc(token).update({ enabled: false });
 }
 
 export async function sendPushNotifications(recipientUids: string[], message: ChatMessageRecord): Promise<void> {
@@ -66,7 +65,7 @@ export async function sendPushNotifications(recipientUids: string[], message: Ch
   await Promise.all(
     tickets.map(async (ticket, index) => {
       if (ticket.status === 'error' && ticket.details?.error === 'DeviceNotRegistered') {
-        await disableToken(tokens[index].token);
+        await disableToken(tokens[index].uid, tokens[index].token);
       }
     }),
   );

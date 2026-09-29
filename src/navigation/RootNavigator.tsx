@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../hooks/useAuth';
@@ -15,6 +15,7 @@ import { ProfileScreen } from '../screens/ProfileScreen';
 import { colors } from '../theme/colors';
 import { navigationRef, navigateToChat } from './navigationRef';
 import type { RootStackParamList } from '../types/navigation';
+import type { PushNotificationData } from '../types/notification';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -27,15 +28,18 @@ const screenOptions = {
 
 export function RootNavigator() {
   const { firebaseUser, loading } = useAuth();
+  const [navigationReady, setNavigationReady] = useState(false);
 
-  useNotifications((data) => {
+  const openConversation = useCallback((data: PushNotificationData) => {
     navigateToChat(data.conversationId, data.conversationType);
-  });
+  }, []);
+
+  useNotifications(openConversation, navigationReady && !loading && firebaseUser !== null);
 
   if (loading) return <Loading />;
 
   return (
-    <NavigationContainer ref={navigationRef}>
+    <NavigationContainer ref={navigationRef} onReady={() => setNavigationReady(true)}>
       <Stack.Navigator screenOptions={screenOptions}>
         {firebaseUser ? (
           <>

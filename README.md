@@ -54,10 +54,12 @@ server/
     middleware/
       authenticate.ts     Validação do Firebase ID Token
     routes/
+      groups.ts           Sincronização do espelho de integrantes dos grupos no Realtime Database
       notifications.ts    Endpoint de envio de notificações
       photos.ts            Upload e leitura de fotos (proxy do Railway Bucket)
       health.ts           Health check
     services/
+      conversationAccess.ts Participantes das conversas e espelho de integrantes dos grupos
       firebaseAdmin.ts     Inicialização do Firebase Admin SDK
       notificationSender.ts Envio via Expo Push Service
       recipientResolver.ts  Cálculo dos destinatários permitidos
@@ -148,9 +150,16 @@ Conversas individuais sempre notificam o outro participante (não possuem polít
 2. O app chama `POST /notifications/messages` na API com `conversationId` e `messageId`, autenticado com o Firebase ID Token.
 3. A API valida o token com o Firebase Admin SDK.
 4. A API confirma no Realtime Database que a mensagem existe e que `senderId` corresponde ao usuário autenticado.
-5. A API marca a mensagem como notificada de forma atômica (transação no próprio nó da mensagem), evitando notificações duplicadas em reenvios.
-6. A API consulta no Firestore os integrantes, a política de notificação e os tokens de dispositivo.
-7. A API envia as notificações pelo Expo Push Service.
+5. A API confirma que o remetente participa da conversa: em conversas diretas, pelo id formado pelos dois `uid`; em grupos, pelos `memberIds` do grupo no Firestore. O tipo da conversa é deduzido do id, não do que o app informou.
+6. A API marca a mensagem como notificada de forma atômica (transação no próprio nó da mensagem), evitando notificações duplicadas em reenvios.
+7. A API calcula os destinatários a partir dos integrantes e da política de notificação do Firestore e busca os tokens de dispositivo ativos.
+8. A API envia as notificações pelo Expo Push Service; tokens rejeitados como `DeviceNotRegistered` são desativados.
+
+### Ciclo de vida do token do dispositivo
+
+- No login, o app solicita permissão, cria o canal de notificações no Android e registra o token em `users/{uid}/devices/{token}` com `enabled: true`. Falhas nessa etapa não bloqueiam o uso do app: a tela de conversas informa quando a permissão foi negada, quando o dispositivo não oferece push (por exemplo, no navegador) ou quando o registro falhou.
+- No logout, antes de encerrar a sessão, o token é marcado como `enabled: false`, e o aparelho deixa de receber push da conta que saiu.
+- Ao tocar na notificação, o app abre a conversa indicada em `conversationId`/`conversationType`, inclusive quando o toque abriu o app que estava fechado.
 
 ## API de notificações (Node.js com Express)
 
@@ -190,6 +199,7 @@ A API está publicada no **Railway**, a partir do diretório `server/` deste mes
 |---|---|---|
 | `GET` | `/health` | Health check — retorna `{ status: "ok" }` quando a API está no ar. |
 | `POST` | `/notifications/messages` | Recebe `{ conversationId, messageId }` com `Authorization: Bearer <firebase-id-token>` e envia as notificações aos destinatários permitidos. |
+| `POST` | `/groups/:groupId/sync-members` | Autenticado com o Firebase ID Token e restrito a integrantes. Relê o grupo no Firestore e espelha os integrantes em `groupMembers/{groupId}` no Realtime Database (veja [Regras de segurança](#regras-de-segurança)). |
 | `POST` | `/photos/:scope/:id` | `scope` é `users` ou `groups`. Recebe o arquivo (`multipart/form-data`, campo `file`) autenticado com o Firebase ID Token, grava no bucket e retorna `{ url }`. |
 | `GET` | `/photos/:scope/:id` | Redireciona (`302`) para uma URL assinada e temporária do bucket — é o endereço salvo no Firestore como `photoUrl`. |
 
@@ -204,10 +214,10 @@ O limite (`memberLimit`) é validado em duas camadas:
 
 ## Regras de segurança
 
-- `firestore.rules`: usuários só criam/editam o próprio perfil; conversas diretas exigem que o autor esteja entre os participantes e que o id do documento siga o padrão determinístico dos dois `uid` ordenados; grupos só podem ser criados/alterados pelo proprietário, com o limite de integrantes validado na própria regra.
-- `database.rules.json`: leitura e escrita de mensagens exigem usuário autenticado; toda mensagem gravada é validada para garantir que `senderId` corresponda ao usuário autenticado e que `id`/`conversationId` batam com o caminho gravado.
+- `firestore.rules`: usuários só criam/editam o próprio perfil; tokens de dispositivo só são lidos e gravados pelo próprio dono; conversas diretas só podem ser lidas pelos dois participantes (conferidos pelo próprio id, o que permite verificar se a conversa já existe antes de criá-la), exigem dois participantes distintos e um id no padrão determinístico dos dois `uid` ordenados; grupos só podem ser lidos por integrantes e criados/alterados pelo proprietário, com o limite de integrantes validado na própria regra.
+- `database.rules.json`: somente participantes leem e enviam mensagens. Em conversas diretas, o participante é identificado pelo próprio id da conversa (`uidA_uidB`). Em grupos, o Realtime Database não consegue consultar o Firestore, por isso a API mantém um espelho dos integrantes em `groupMembers/{groupId}` — gravado apenas pela API (clientes não leem nem escrevem nesse nó) a partir dos `memberIds` do Firestore, sempre que um grupo é criado, um integrante é adicionado ou removido e quando o chat do grupo é aberto. Assim, um integrante removido perde o acesso às mensagens assim que o espelho é atualizado. Cada mensagem só pode ser criada (nunca sobrescrita ou apagada) e é validada para garantir que `senderId` corresponda ao usuário autenticado, que `id`/`conversationId` batam com o caminho, que `conversationType` corresponda ao tipo da conversa e que o texto tenha entre 1 e 2000 caracteres.
 - A restrição de acesso ao perfil completo de um usuário (Tela de Perfil) apenas a quem compartilha uma conversa ou grupo é reforçada na aplicação: a tela de perfil só é alcançável a partir do cabeçalho de uma conversa direta já existente ou da lista de integrantes de um grupo em comum — ambos contextos que já comprovam relação. A listagem geral de usuários (`Tela de Usuários`, necessária para iniciar novas conversas) permanece acessível a qualquer usuário autenticado, conforme o próprio modelo de dados sugerido no enunciado (perfil em documento único no Firestore).
-- Validações que dependem simultaneamente do Firestore e do Realtime Database (existência da mensagem + participantes + política) são executadas pela API, e não pelas regras dos bancos.
+- Validações que dependem simultaneamente do Firestore e do Realtime Database (existência da mensagem + participação do remetente + política, e o espelho de integrantes dos grupos) são executadas pela API, e não pelas regras dos bancos.
 
 ## Capturas de tela e evidência de notificação
 
@@ -264,7 +274,7 @@ Hooks customizados (`useAuth`, `useChat`, `useGroups`, `useUsers`, `useConversat
 
 ### 🔒 Segurança
 
-- [x] Regras de segurança do Firestore e Realtime Database — escritas em `firestore.rules` e `database.rules.json`; pendente publicá-las no Console
+- [ ] Regras de segurança do Firestore e Realtime Database — `firestore.rules` e `database.rules.json` atualizadas (participantes, espelho de integrantes dos grupos); falta republicá-las no Console do Firebase
 
 ### 🔷 TypeScript, hooks e organização
 

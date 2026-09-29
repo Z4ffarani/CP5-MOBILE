@@ -13,10 +13,18 @@ import {
 } from 'firebase/firestore';
 import { firestore } from './firebase';
 import { uploadGroupPhoto } from './storageService';
+import { authorizedFetch } from './apiClient';
 import { isValidMemberLimit, hasAvailableSlot } from '../utils/groupValidation';
 import type { ChatGroup, CreateGroupInput, NotificationPolicy } from '../types/group';
 
 const GROUPS_COLLECTION = 'groups';
+
+// Pede à API que espelhe os integrantes do grupo no Realtime Database, onde as regras liberam as mensagens
+// somente a integrantes ativos. A API relê o grupo no Firestore; o app não informa quem são os integrantes.
+export async function syncGroupAccess(groupId: string): Promise<void> {
+  const response = await authorizedFetch(`/groups/${groupId}/sync-members`, { method: 'POST' });
+  if (!response.ok) throw new Error('Não foi possível atualizar o acesso às mensagens do grupo.');
+}
 
 export async function createGroup(ownerId: string, input: CreateGroupInput): Promise<ChatGroup> {
   const memberIds = Array.from(new Set([ownerId, ...input.memberIds]));
@@ -43,6 +51,8 @@ export async function createGroup(ownerId: string, input: CreateGroupInput): Pro
   };
 
   await setDoc(groupRef, group);
+  // Se falhar aqui, o acesso é sincronizado de novo quando algum integrante abrir o chat do grupo.
+  await syncGroupAccess(group.id).catch(() => undefined);
   return group;
 }
 
@@ -92,6 +102,8 @@ export async function addMember(groupId: string, newMemberId: string): Promise<v
       updatedAt: Date.now(),
     });
   });
+
+  await syncGroupAccess(groupId).catch(() => undefined);
 }
 
 export async function removeMember(groupId: string, requesterId: string, memberId: string): Promise<void> {
@@ -107,6 +119,9 @@ export async function removeMember(groupId: string, requesterId: string, memberI
     memberIds: arrayRemove(memberId),
     updatedAt: Date.now(),
   });
+
+  // Obrigatório: sem isso o integrante removido continuaria lendo as mensagens do grupo.
+  await syncGroupAccess(groupId);
 }
 
 export async function updateNotificationPolicy(

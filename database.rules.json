@@ -1,11 +1,19 @@
 {
   "rules": {
+    "groupMembers": {
+      ".read": false,
+      ".write": false
+    },
     "messages": {
       "$conversationId": {
-        ".read": "auth != null",
-        ".write": "auth != null",
+        ".read": "auth != null && ($conversationId.beginsWith(auth.uid + '_') || $conversationId.endsWith('_' + auth.uid) || root.child('groupMembers').child($conversationId).child(auth.uid).val() === true)",
+        ".indexOn": ["createdAt"],
         "$messageId": {
-          ".validate": "newData.hasChildren(['id', 'conversationId', 'conversationType', 'senderId', 'text', 'target', 'mentionedUserIds', 'createdAt']) && newData.child('id').val() === $messageId && newData.child('conversationId').val() === $conversationId && newData.child('senderId').val() === auth.uid"
+          ".write": "auth != null && !data.exists() && ($conversationId.beginsWith(auth.uid + '_') || $conversationId.endsWith('_' + auth.uid) || root.child('groupMembers').child($conversationId).child(auth.uid).val() === true)",
+          ".validate": "newData.hasChildren(['id', 'conversationId', 'conversationType', 'senderId', 'text', 'target', 'createdAt']) && newData.child('id').val() === $messageId && newData.child('conversationId').val() === $conversationId && newData.child('senderId').val() === auth.uid && (($conversationId.contains('_') && newData.child('conversationType').val() === 'direct') || (!$conversationId.contains('_') && newData.child('conversationType').val() === 'group')) && newData.child('text').isString() && newData.child('text').val().length > 0 && newData.child('text').val().length <= 2000 && newData.child('createdAt').isNumber()",
+          "notified": {
+            ".validate": false
+          }
         }
       }
     }

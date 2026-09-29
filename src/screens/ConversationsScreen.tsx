@@ -8,11 +8,19 @@ import { Loading } from '../components/Loading';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { colors } from '../theme/colors';
 import type { RootStackParamList } from '../types/navigation';
+import type { PushRegistrationStatus } from '../types/notification';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Conversations'>;
 
+const PUSH_NOTICES: Partial<Record<PushRegistrationStatus, string>> = {
+  denied: 'Notificações desativadas. Permita as notificações do WhatChat nas configurações do aparelho para ser avisado de novas mensagens.',
+  unavailable: 'Notificações push indisponíveis neste dispositivo.',
+  error: 'Não foi possível registrar este dispositivo para notificações.',
+};
+
 export function ConversationsScreen({ navigation }: Props) {
-  const { profile, logout } = useAuth();
+  const { profile, logout, pushStatus } = useAuth();
+  const pushNotice = PUSH_NOTICES[pushStatus];
   const { conversations, loading, error, reload } = useConversations(profile?.uid);
 
   if (loading) return <Loading />;
@@ -25,6 +33,8 @@ export function ConversationsScreen({ navigation }: Props) {
           <Text style={styles.logout}>Sair</Text>
         </Pressable>
       </View>
+
+      {pushNotice ? <Text style={styles.notice}>{pushNotice}</Text> : null}
 
       <ErrorMessage message={error} />
 
@@ -79,6 +89,13 @@ const styles = StyleSheet.create({
   logout: {
     color: colors.surface,
     fontWeight: '600',
+  },
+  notice: {
+    backgroundColor: colors.primaryLight,
+    color: colors.primaryDark,
+    fontSize: 13,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
   empty: {
     alignItems: 'center',

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { listenToMessages, sendMessage } from '../services/chatService';
+import { syncGroupAccess } from '../services/groupService';
 import type { ChatMessage, ConversationType, MessageTarget } from '../types/chat';
 
 export function useChat(conversationId: string, conversationType: ConversationType, senderId: string) {
@@ -8,9 +9,26 @@ export function useChat(conversationId: string, conversationType: ConversationTy
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsubscribe = listenToMessages(conversationId, setMessages);
-    return unsubscribe;
-  }, [conversationId]);
+    let cancelled = false;
+    let unsubscribe: (() => void) | null = null;
+    setMessages([]);
+    setError(null);
+
+    // Em grupos, garante que o espelho de integrantes no Realtime Database esteja atualizado antes de escutar.
+    const prepareAccess = conversationType === 'group' ? syncGroupAccess(conversationId).catch(() => undefined) : Promise.resolve();
+
+    prepareAccess.then(() => {
+      if (cancelled) return;
+      unsubscribe = listenToMessages(conversationId, setMessages, () => {
+        setError('Você não tem acesso às mensagens desta conversa.');
+      });
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
+  }, [conversationId, conversationType]);
 
   const send = useCallback(
     async (text: string, target?: MessageTarget, mentionedUserIds?: string[]) => {
