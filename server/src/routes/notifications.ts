@@ -4,6 +4,8 @@ import { adminDatabase } from '../services/firebaseAdmin';
 import { loadConversation } from '../services/conversationAccess';
 import { resolveRecipients } from '../services/recipientResolver';
 import { sendPushNotifications } from '../services/notificationSender';
+import { withTimeout } from '../utils/withTimeout';
+import { FIREBASE_TIMEOUT_MS } from '../services/firebaseAdmin';
 import type { ChatMessageRecord } from '../types';
 
 export const notificationsRouter = Router();
@@ -18,7 +20,7 @@ notificationsRouter.post('/messages', authenticate, async (req, res: Response) =
   }
 
   const messageRef = adminDatabase.ref(`messages/${conversationId}/${messageId}`);
-  const snapshot = await messageRef.get();
+  const snapshot = await withTimeout(messageRef.get(), FIREBASE_TIMEOUT_MS);
 
   if (!snapshot.exists()) {
     res.status(404).json({ error: 'Mensagem não encontrada.' });
@@ -40,10 +42,13 @@ notificationsRouter.post('/messages', authenticate, async (req, res: Response) =
   }
 
   const notifiedRef = adminDatabase.ref(`messages/${conversationId}/${messageId}/notified`);
-  const transactionResult = await notifiedRef.transaction((current) => {
-    if (current === true) return undefined;
-    return true;
-  });
+  const transactionResult = await withTimeout(
+    notifiedRef.transaction((current) => {
+      if (current === true) return undefined;
+      return true;
+    }),
+    FIREBASE_TIMEOUT_MS,
+  );
 
   if (!transactionResult.committed) {
     res.status(200).json({ status: 'already_notified' });

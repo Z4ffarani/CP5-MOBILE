@@ -1,4 +1,5 @@
-import { adminDatabase, adminFirestore } from './firebaseAdmin';
+import { adminDatabase, adminFirestore, FIREBASE_TIMEOUT_MS } from './firebaseAdmin';
+import { withTimeout } from '../utils/withTimeout';
 import type { ChatGroupRecord, ConversationContext } from '../types';
 
 // Ids de conversa direta são os dois uid ordenados unidos por "_"; ids de grupo são ids automáticos do Firestore (sem "_").
@@ -7,7 +8,7 @@ export function conversationTypeFromId(conversationId: string): 'direct' | 'grou
 }
 
 export async function getGroupRecord(groupId: string): Promise<ChatGroupRecord | null> {
-  const snapshot = await adminFirestore.collection('groups').doc(groupId).get();
+  const snapshot = await withTimeout(adminFirestore.collection('groups').doc(groupId).get(), FIREBASE_TIMEOUT_MS);
   return snapshot.exists ? (snapshot.data() as ChatGroupRecord) : null;
 }
 
@@ -27,5 +28,5 @@ export async function loadConversation(conversationId: string): Promise<Conversa
 // onde as regras do RTDB os consultam para liberar leitura e escrita das mensagens somente a integrantes ativos.
 export async function syncGroupMembers(groupId: string, memberIds: string[]): Promise<void> {
   const members = Object.fromEntries(memberIds.map((uid) => [uid, true]));
-  await adminDatabase.ref(`groupMembers/${groupId}`).set(members);
+  await withTimeout(adminDatabase.ref(`groupMembers/${groupId}`).set(members), FIREBASE_TIMEOUT_MS);
 }

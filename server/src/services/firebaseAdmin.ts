@@ -23,6 +23,9 @@ function buildApp(): App {
 
 const app = buildApp();
 
+// Limite para cada acesso ao Firebase feito pela API (veja utils/withTimeout).
+export const FIREBASE_TIMEOUT_MS = 10000;
+
 export const adminAuth: Auth = getAuth(app);
 export const adminFirestore: Firestore = getFirestore(app);
 export const adminDatabase: Database = getDatabase(app);
