@@ -244,12 +244,12 @@ Hooks customizados (`useAuth`, `useChat`, `useGroups`, `useUsers`, `useConversat
 
 - [x] Mensagens no Realtime Database
 - [x] Perfis, grupos e configurações no Firestore
-- [x] Imagens armazenadas em serviço apropriado e apenas suas URLs salvas no Firestore
+- [x] Imagens armazenadas em serviço apropriado e apenas suas URLs salvas no Firestore — upload/leitura testados ponta a ponta contra a API publicada
 - [x] Atualização de mensagens em tempo real
 
 ### 🔔 Notificações push
 
-- [ ] Firebase Cloud Messaging configurado — projeto Firebase real ativo (Auth, Firestore e RTDB confirmados); falta testar o recebimento em dispositivo físico
+- [ ] Firebase Cloud Messaging configurado — projeto Firebase real ativo; fluxo de autenticação/validação da API testado ponta a ponta via requisições reais (200/403/404 conforme esperado); falta apenas testar o recebimento em dispositivo físico
 - [x] Tokens de dispositivos armazenados com segurança
 - [x] API online autenticada com Firebase ID Token
 - [x] API publicada em URL pública com HTTPS — https://whatchat-api-production.up.railway.app
