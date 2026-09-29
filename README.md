@@ -18,6 +18,8 @@ Aplicativo de chat individual e em grupo, desenvolvido em React Native (Expo) co
 - Cloud Firestore
 - Firebase Realtime Database
 - Firebase Cloud Messaging / Expo Notifications
+- EAS Build e Expo Dev Client (development build para push em dispositivo físico)
+- Ionicons (`@expo/vector-icons`)
 - Node.js com Express (API de notificações e fotos)
 - Firebase Admin SDK (API)
 - Railway (hospedagem da API e Storage Bucket S3-compatível para fotos)
@@ -72,17 +74,19 @@ firebaseConfig.json       Configuração do SDK cliente do Firebase
 
 ## Instalação e execução do aplicativo
 
-Pré-requisitos: Node.js 18+, npm, Expo Go (para testes rápidos) ou um development build para testar notificações push.
+Pré-requisitos: Node.js 18+ e npm. Para notificações push, um aparelho Android físico com o development build instalado (veja [Configuração no Android](#configuração-no-android)).
 
 ```bash
 npm install
 cp .env.example .env   # já preenchido com a URL pública da API neste repositório
-npx expo start
+npx expo start --dev-client
 ```
 
-Abra no Android/iOS pelo Expo Go escaneando o QR Code, ou execute `npx expo start --android` / `--ios`.
+Formas de executar:
 
-> As notificações push completas exigem um development build (`npx expo run:android` / `npx expo run:ios` ou EAS Build), pois o funcionamento completo não depende exclusivamente do Expo Go.
+- **Development build (recomendado, necessário para push)**: instale o APK gerado pelo EAS Build e abra o app com o servidor acima rodando.
+- **Expo Go**: `npx expo start` e leia o QR Code. Todas as telas funcionam, exceto o recebimento de push.
+- **Navegador**: `npx expo start --web`. Útil para testar telas e o chat em tempo real com duas contas; push não é suportado na web.
 
 ## Configuração do Firebase
 
@@ -128,10 +132,21 @@ Nenhuma imagem é armazenada em Base64 no Firestore ou no Realtime Database.
 
 ### Configuração no app
 
-O app usa `expo-notifications` para solicitar permissão, obter o Expo Push Token e tratar o toque na notificação (`src/services/notificationService.ts`). O token é salvo em `users/{uid}/devices/{token}` no Firestore.
+O app usa `expo-notifications` para solicitar permissão, criar o canal de notificações do Android, obter o Expo Push Token (com o `projectId` do EAS) e tratar o toque na notificação (`src/services/notificationService.ts`). O token é salvo em `users/{uid}/devices/{token}` no Firestore. A API envia as notificações pelo Expo Push Service, que as entrega no Android por meio do Firebase Cloud Messaging (FCM) do projeto.
 
-- **Android**: nenhuma configuração adicional além da permissão de notificações (Android 13+ solicita em runtime, já tratado pelo `expo-notifications`).
-- **iOS**: as notificações push exigem um development build assinado com um Apple Developer Program válido (não funcionam no simulador nem, de forma completa, no Expo Go).
+O push remoto não funciona no Expo Go (no Android, desde o SDK 53), por isso é necessário um development build, gerado pelo EAS Build com os perfis definidos em `eas.json`.
+
+### Configuração no Android
+
+1. **Projeto EAS**: `npx eas-cli login` e `npx eas-cli init` — vinculam o app a um projeto no expo.dev e gravam `extra.eas.projectId` no `app.json`, usado para obter o Expo Push Token.
+2. **App Android no Firebase**: em Configurações do projeto → Seus apps → Adicionar app → Android, com o pacote `com.whatchat.app`. O `google-services.json` baixado fica na raiz do repositório e é referenciado em `android.googleServicesFile` no `app.json`. Ele contém apenas a configuração pública do cliente (equivalente ao `firebaseConfig.json`).
+3. **Credencial FCM V1 (secreta)**: uma chave de conta de serviço com o papel *Firebase Cloud Messaging API Admin* é enviada ao Expo em `npx eas-cli credentials` → Android → Google Service Account → *FCM V1*. Ela fica armazenada somente no EAS — nunca no aplicativo ou no GitHub — e é o que permite ao Expo Push Service entregar as notificações via FCM.
+4. **Build**: `npx eas-cli build --profile development --platform android` gera um APK instalável no aparelho físico. Como o `.env` não é versionado, a URL pública da API é definida em `env` de cada perfil do `eas.json`.
+5. **Execução**: com o APK instalado e o aparelho na mesma rede, `npx expo start --dev-client`. No Android 13+ a permissão de notificações é solicitada em tempo de execução no primeiro login.
+
+### Configuração no iOS
+
+As notificações push no iOS exigem uma conta paga do Apple Developer Program, pois dependem de uma chave APNs e de um build assinado; não funcionam no simulador nem no Expo Go. Com a conta, `npx eas-cli build --profile development --platform ios` gera e registra as credenciais APNs automaticamente, sem mudanças no código: o mesmo `getExpoPushTokenAsync` e o mesmo endpoint da API atendem as duas plataformas. Os testes deste trabalho foram feitos em Android.
 
 ### Política de notificações
 
@@ -259,7 +274,7 @@ Hooks customizados (`useAuth`, `useChat`, `useGroups`, `useUsers`, `useConversat
 
 ### 🔔 Notificações push
 
-- [ ] Firebase Cloud Messaging configurado — projeto Firebase real ativo; fluxo de autenticação/validação da API testado ponta a ponta via requisições reais (200/403/404 conforme esperado); falta apenas testar o recebimento em dispositivo físico
+- [ ] Firebase Cloud Messaging configurado — código, `eas.json` e documentação prontos; falta vincular o projeto EAS, adicionar o `google-services.json`, enviar a credencial FCM V1 ao EAS e testar o recebimento em dispositivo físico
 - [x] Tokens de dispositivos armazenados com segurança
 - [x] API online autenticada com Firebase ID Token
 - [x] API publicada em URL pública com HTTPS — https://whatchat-api-production.up.railway.app
