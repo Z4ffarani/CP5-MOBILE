@@ -31,7 +31,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "O WhatChat usa sua galeria para selecionar fotos de perfil e de grupo."
+          "photosPermission": "O WhatChat usa sua galeria para selecionar fotos de perfil e de grupo.",
+          "microphonePermission": false
         }
       ],
       [
@@ -42,6 +43,12 @@
         }
       ]
     ],
-    "backgroundColor": "#0B1017"
+    "backgroundColor": "#0B1017",
+    "extra": {
+      "eas": {
+        "projectId": "74a262bc-ece1-48e1-831c-1f4e71c1e98c"
+      }
+    },
+    "owner": "z4ffarani"
   }
 }

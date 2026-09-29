@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "993688233608",
+    "firebase_url": "https://cp5-mobile-c3975-default-rtdb.firebaseio.com",
+    "project_id": "cp5-mobile-c3975",
+    "storage_bucket": "cp5-mobile-c3975.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:993688233608:android:4cf6292e3107c1c35f213d",
+        "android_client_info": {
+          "package_name": "com.whatchat.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAak0_logmyyDyGMhv3VMDY-mWfrDQi6U8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
