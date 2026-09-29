@@ -1,0 +1,13 @@
+{
+  "rules": {
+    "messages": {
+      "$conversationId": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        "$messageId": {
+          ".validate": "newData.hasChildren(['id', 'conversationId', 'conversationType', 'senderId', 'text', 'target', 'mentionedUserIds', 'createdAt']) && newData.child('id').val() === $messageId && newData.child('conversationId').val() === $conversationId && newData.child('senderId').val() === auth.uid"
+        }
+      }
+    }
+  }
+}

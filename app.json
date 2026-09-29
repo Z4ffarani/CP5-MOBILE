@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "WhatChat",
+    "slug": "whatchat",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.whatchat.app",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "O WhatChat usa sua galeria para selecionar fotos de perfil e de grupo."
+      }
+    },
+    "android": {
+      "package": "com.whatchat.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O WhatChat usa sua galeria para selecionar fotos de perfil e de grupo."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#0A66C2"
+        }
+      ]
+    ]
+  }
+}

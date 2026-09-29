@@ -1,0 +1,73 @@
+import { adminFirestore } from './firebaseAdmin';
+import type { ChatMessageRecord, DeviceTokenRecord } from '../types';
+
+const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
+
+type ExpoPushTicket = {
+  status: 'ok' | 'error';
+  message?: string;
+  details?: { error?: string };
+};
+
+async function collectTokens(uids: string[]): Promise<{ uid: string; token: string }[]> {
+  const results = await Promise.all(
+    uids.map(async (uid) => {
+      const devicesSnapshot = await adminFirestore
+        .collection('users')
+        .doc(uid)
+        .collection('devices')
+        .where('enabled', '==', true)
+        .get();
+
+      return devicesSnapshot.docs.map((docSnapshot) => ({
+        uid,
+        token: (docSnapshot.data() as DeviceTokenRecord).token,
+      }));
+    }),
+  );
+
+  return results.flat();
+}
+
+async function disableToken(token: string): Promise<void> {
+  const snapshot = await adminFirestore.collectionGroup('devices').where('token', '==', token).get();
+  await Promise.all(snapshot.docs.map((docSnapshot) => docSnapshot.ref.update({ enabled: false })));
+}
+
+export async function sendPushNotifications(recipientUids: string[], message: ChatMessageRecord): Promise<void> {
+  if (recipientUids.length === 0) return;
+
+  const tokens = await collectTokens(recipientUids);
+  if (tokens.length === 0) return;
+
+  const notifications = tokens.map(({ token }) => ({
+    to: token,
+    title: message.conversationType === 'group' ? 'Nova mensagem no grupo' : 'Nova mensagem',
+    body: message.text,
+    data: {
+      conversationId: message.conversationId,
+      conversationType: message.conversationType,
+      messageId: message.id,
+    },
+  }));
+
+  const response = await fetch(EXPO_PUSH_URL, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(notifications),
+  });
+
+  const payload = (await response.json()) as { data?: ExpoPushTicket[] };
+  const tickets = payload.data ?? [];
+
+  await Promise.all(
+    tickets.map(async (ticket, index) => {
+      if (ticket.status === 'error' && ticket.details?.error === 'DeviceNotRegistered') {
+        await disableToken(tokens[index].token);
+      }
+    }),
+  );
+}

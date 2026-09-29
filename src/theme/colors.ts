@@ -1,0 +1,15 @@
+export const colors = {
+  primary: '#0A66C2',
+  primaryDark: '#084d95',
+  primaryLight: '#E7F1FC',
+  background: '#F5F7FA',
+  surface: '#FFFFFF',
+  bubbleOutgoing: '#DCEBFF',
+  bubbleIncoming: '#FFFFFF',
+  text: '#111B21',
+  textSecondary: '#667781',
+  border: '#E5E9EF',
+  danger: '#D64545',
+  success: '#2E7D32',
+  placeholder: '#9AA5B1',
+};
