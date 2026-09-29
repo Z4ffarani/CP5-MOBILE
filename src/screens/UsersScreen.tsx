@@ -21,7 +21,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Users'>;
 export function UsersScreen({ navigation, route }: Props) {
   const { profile } = useAuth();
   const [search, setSearch] = useState('');
-  const { users, loading } = useUsers(profile?.uid, search);
+  const { users, loading, error: usersError } = useUsers(profile?.uid, search);
   const { addGroupMember, saving, error } = useGroups();
   const selectForGroup = route.params?.selectForGroup ?? false;
   const targetGroupId = route.params?.groupId;
@@ -83,7 +83,7 @@ export function UsersScreen({ navigation, route }: Props) {
         />
       </View>
 
-      <ErrorMessage message={chatError} />
+      <ErrorMessage message={usersError ?? chatError} />
 
       <FlatList
         data={users}
