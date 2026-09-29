@@ -7,6 +7,7 @@ import { photosRouter } from './routes/photos';
 export function createApp(): Express {
   const app = express();
 
+  app.set('trust proxy', true);
   app.use(cors());
   app.use(express.json());
 
