@@ -17,6 +17,11 @@ export type RegisterInput = {
   photoUri: string | null;
 };
 
+export type RegisterResult = {
+  profile: ChatUser;
+  photoFailed: boolean;
+};
+
 export type LoginInput = {
   email: string;
   password: string;

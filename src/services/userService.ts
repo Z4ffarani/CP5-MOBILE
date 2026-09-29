@@ -2,6 +2,7 @@ import {
   doc,
   getDoc,
   setDoc,
+  updateDoc,
   collection,
   getDocs,
   query,
@@ -14,6 +15,10 @@ const USERS_COLLECTION = 'users';
 
 export async function createUserProfile(user: ChatUser): Promise<void> {
   await setDoc(doc(firestore, USERS_COLLECTION, user.uid), user);
+}
+
+export async function updateUserPhoto(uid: string, photoUrl: string): Promise<void> {
+  await updateDoc(doc(firestore, USERS_COLLECTION, uid), { photoUrl });
 }
 
 export async function getUserProfile(uid: string): Promise<ChatUser | null> {

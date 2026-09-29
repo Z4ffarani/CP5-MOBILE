@@ -7,15 +7,13 @@ import {
   type Unsubscribe,
 } from 'firebase/auth';
 import { auth } from './firebase';
-import { createUserProfile } from './userService';
+import { createUserProfile, updateUserPhoto } from './userService';
 import { uploadUserPhoto } from './storageService';
-import type { ChatUser, LoginInput, RegisterInput } from '../types/user';
+import type { ChatUser, LoginInput, RegisterInput, RegisterResult } from '../types/user';
 
-export async function register(input: RegisterInput): Promise<ChatUser> {
+export async function register(input: RegisterInput): Promise<RegisterResult> {
   const credential = await createUserWithEmailAndPassword(auth, input.email, input.password);
   const uid = credential.user.uid;
-
-  const photoUrl = input.photoUri ? await uploadUserPhoto(uid, input.photoUri) : '';
 
   const profile: ChatUser = {
     uid,
@@ -23,12 +21,28 @@ export async function register(input: RegisterInput): Promise<ChatUser> {
     email: input.email,
     phoneNumber: input.phoneNumber,
     birthDate: input.birthDate,
-    photoUrl,
+    photoUrl: '',
     createdAt: Date.now(),
   };
 
-  await createUserProfile(profile);
-  return profile;
+  try {
+    await createUserProfile(profile);
+  } catch (err) {
+    // Sem o perfil a conta ficaria inutilizável; desfaz a criação para o cadastro poder ser refeito.
+    await credential.user.delete().catch(() => undefined);
+    throw err;
+  }
+
+  if (!input.photoUri) return { profile, photoFailed: false };
+
+  // A foto é enviada depois do perfil: se falhar, a conta continua válida e usa o avatar padrão.
+  try {
+    const photoUrl = await uploadUserPhoto(uid, input.photoUri);
+    await updateUserPhoto(uid, photoUrl);
+    return { profile: { ...profile, photoUrl }, photoFailed: false };
+  } catch {
+    return { profile, photoFailed: true };
+  }
 }
 
 export async function login(input: LoginInput): Promise<User> {

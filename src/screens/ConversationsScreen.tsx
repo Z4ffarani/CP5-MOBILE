@@ -32,7 +32,7 @@ const PUSH_NOTICES: Partial<Record<PushRegistrationStatus, { icon: IconName; tex
 };
 
 export function ConversationsScreen({ navigation }: Props) {
-  const { profile, logout, pushStatus } = useAuth();
+  const { profile, logout, pushStatus, error: authError } = useAuth();
   const { conversations, loading, error, reload } = useConversations(profile?.uid);
   const insets = useSafeAreaInsets();
   const pushNotice = PUSH_NOTICES[pushStatus];
@@ -62,6 +62,7 @@ export function ConversationsScreen({ navigation }: Props) {
         </View>
       ) : null}
 
+      <ErrorMessage message={authError} />
       <ErrorMessage message={error} />
 
       <FlatList

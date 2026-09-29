@@ -74,8 +74,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = useCallback(async (input: RegisterInput) => {
     setError(null);
     try {
-      const createdProfile = await registerService(input);
+      const { profile: createdProfile, photoFailed } = await registerService(input);
       setProfile(createdProfile);
+      if (photoFailed) {
+        setError('Conta criada, mas não foi possível enviar a foto de perfil. O avatar padrão será usado.');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Não foi possível criar a conta.');
       throw err;

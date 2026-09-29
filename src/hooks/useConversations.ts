@@ -10,7 +10,11 @@ export function useConversations(uid: string | undefined) {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    if (!uid) return;
+    if (!uid) {
+      // Sem perfil carregado não há o que listar; não deixa a tela presa no carregamento.
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
 
