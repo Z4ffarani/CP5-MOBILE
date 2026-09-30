@@ -33,7 +33,7 @@ const PUSH_NOTICES: Partial<Record<PushRegistrationStatus, { icon: IconName; tex
 
 export function ConversationsScreen({ navigation }: Props) {
   const { profile, logout, pushStatus, error: authError } = useAuth();
-  const { conversations, loading, error, reload } = useConversations(profile?.uid);
+  const { conversations, loading, refreshing, error, reload } = useConversations(profile?.uid);
   const insets = useSafeAreaInsets();
   const pushNotice = PUSH_NOTICES[pushStatus];
 
@@ -69,7 +69,7 @@ export function ConversationsScreen({ navigation }: Props) {
         data={conversations}
         keyExtractor={(item) => item.id}
         onRefresh={reload}
-        refreshing={loading}
+        refreshing={refreshing}
         renderItem={({ item }) => (
           <ConversationItem
             conversation={item}

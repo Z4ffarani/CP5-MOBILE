@@ -48,7 +48,7 @@ export function UsersScreen({ navigation, route }: Props) {
     setStartingChatWith(uid);
     try {
       const conversation = await findOrCreateDirectConversation(profile.uid, uid);
-      navigation.navigate('Chat', { conversationId: conversation.id, conversationType: 'direct' });
+      navigation.replace('Chat', { conversationId: conversation.id, conversationType: 'direct' });
     } catch (err) {
       setChatError(err instanceof Error ? err.message : 'Não foi possível iniciar a conversa.');
     } finally {
@@ -66,7 +66,9 @@ export function UsersScreen({ navigation, route }: Props) {
       return;
     }
 
-    navigation.navigate('GroupForm', { selectedMemberIds: selectedIds });
+    // No React Navigation 7, navigate empilharia um formulário novo e vazio (perdendo nome e foto já preenchidos);
+    // popTo volta ao formulário existente e só acrescenta os integrantes escolhidos.
+    navigation.popTo('GroupForm', { selectedMemberIds: selectedIds }, { merge: true });
   }
 
   if (loading) return <Loading />;

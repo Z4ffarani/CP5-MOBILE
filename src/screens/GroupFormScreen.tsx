@@ -126,7 +126,7 @@ export function GroupFormScreen({ navigation, route }: Props) {
         const ok = await changePolicy(existingGroup.id, profile.uid, policy);
         if (!ok) return;
       }
-      navigation.navigate('GroupMembers', { groupId: existingGroup.id });
+      navigation.popTo('GroupMembers', { groupId: existingGroup.id });
       return;
     }
 
@@ -148,7 +148,7 @@ export function GroupFormScreen({ navigation, route }: Props) {
     });
 
     if (group) {
-      navigation.navigate('Chat', { conversationId: group.id, conversationType: 'group' });
+      navigation.replace('Chat', { conversationId: group.id, conversationType: 'group' });
     }
   }
 
@@ -188,7 +188,7 @@ export function GroupFormScreen({ navigation, route }: Props) {
           label="Gerenciar integrantes"
           icon="people-outline"
           variant="outline"
-          onPress={() => existingGroup && navigation.navigate('GroupMembers', { groupId: existingGroup.id })}
+          onPress={() => existingGroup && navigation.popTo('GroupMembers', { groupId: existingGroup.id })}
           style={styles.spaced}
         />
       )}
