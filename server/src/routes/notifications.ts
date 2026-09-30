@@ -1,7 +1,8 @@
 import { Router, type Response } from 'express';
 import { authenticate, type AuthenticatedRequest } from '../middleware/authenticate';
 import { adminDatabase } from '../services/firebaseAdmin';
-import { loadConversation } from '../services/conversationAccess';
+import { getUserName, loadConversation } from '../services/conversationAccess';
+import { buildNotificationContent } from '../services/notificationContent';
 import { resolveRecipients } from '../services/recipientResolver';
 import { sendPushNotifications } from '../services/notificationSender';
 import { withTimeout } from '../utils/withTimeout';
@@ -56,7 +57,10 @@ notificationsRouter.post('/messages', authenticate, async (req, res: Response) =
   }
 
   const recipients = resolveRecipients(conversation, message);
-  await sendPushNotifications(recipients, message);
+  const senderName = (await getUserName(uid)) ?? 'Alguém';
+  await sendPushNotifications(recipients, message, (recipientUid) =>
+    buildNotificationContent(conversation, message, senderName, recipientUid),
+  );
 
   res.status(200).json({ status: 'sent', recipients: recipients.length });
 });

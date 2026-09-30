@@ -21,6 +21,7 @@ export type ChatMessageRecord = {
 };
 
 export type ChatGroupRecord = {
+  name: string;
   ownerId: string;
   memberIds: string[];
   notificationPolicy: NotificationPolicy;
@@ -28,7 +29,12 @@ export type ChatGroupRecord = {
 
 export type ConversationContext =
   | { type: 'direct'; participantIds: string[] }
-  | { type: 'group'; participantIds: string[]; notificationPolicy: NotificationPolicy };
+  | { type: 'group'; participantIds: string[]; notificationPolicy: NotificationPolicy; groupName: string };
+
+export type NotificationContent = {
+  title: string;
+  body: string;
+};
 
 export type DeviceTokenRecord = {
   token: string;

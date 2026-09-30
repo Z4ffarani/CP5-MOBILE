@@ -1,5 +1,5 @@
 import { adminFirestore } from './firebaseAdmin';
-import type { ChatMessageRecord, DeviceTokenRecord } from '../types';
+import type { ChatMessageRecord, DeviceTokenRecord, NotificationContent } from '../types';
 
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 
@@ -33,16 +33,19 @@ async function disableToken(uid: string, token: string): Promise<void> {
   await adminFirestore.collection('users').doc(uid).collection('devices').doc(token).update({ enabled: false });
 }
 
-export async function sendPushNotifications(recipientUids: string[], message: ChatMessageRecord): Promise<void> {
+export async function sendPushNotifications(
+  recipientUids: string[],
+  message: ChatMessageRecord,
+  contentFor: (recipientUid: string) => NotificationContent,
+): Promise<void> {
   if (recipientUids.length === 0) return;
 
   const tokens = await collectTokens(recipientUids);
   if (tokens.length === 0) return;
 
-  const notifications = tokens.map(({ token }) => ({
+  const notifications = tokens.map(({ uid, token }) => ({
     to: token,
-    title: message.conversationType === 'group' ? 'Nova mensagem no grupo' : 'Nova mensagem',
-    body: message.text,
+    ...contentFor(uid),
     data: {
       conversationId: message.conversationId,
       conversationType: message.conversationType,

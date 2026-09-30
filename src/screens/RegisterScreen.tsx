@@ -8,6 +8,7 @@ import { ErrorMessage } from '../components/ErrorMessage';
 import { TextField } from '../components/TextField';
 import { Button } from '../components/Button';
 import { PhotoPicker } from '../components/PhotoPicker';
+import { formatPhone, phoneError, formatBirthDate, birthDateError } from '../utils/profileFields';
 import { colors } from '../theme/colors';
 import type { RootStackParamList } from '../types/navigation';
 
@@ -47,6 +48,12 @@ export function RegisterScreen({ navigation }: Props) {
 
   async function handleRegister() {
     setFormError(null);
+
+    const fieldError = phoneError(phoneNumber) ?? birthDateError(birthDate);
+    if (fieldError) {
+      setFormError(fieldError);
+      return;
+    }
 
     if (password !== confirmPassword) {
       setFormError('As senhas não coincidem.');
@@ -98,16 +105,19 @@ export function RegisterScreen({ navigation }: Props) {
       />
       <TextField
         icon="call-outline"
-        placeholder="Número de celular"
+        placeholder="Celular com DDD: (11) 91234-5678"
         keyboardType="phone-pad"
+        maxLength={15}
         value={phoneNumber}
-        onChangeText={setPhoneNumber}
+        onChangeText={(value) => setPhoneNumber(formatPhone(value))}
       />
       <TextField
         icon="calendar-outline"
         placeholder="Data de nascimento (DD/MM/AAAA)"
+        keyboardType="number-pad"
+        maxLength={10}
         value={birthDate}
-        onChangeText={setBirthDate}
+        onChangeText={(value) => setBirthDate(formatBirthDate(value))}
       />
       <TextField icon="lock-closed-outline" placeholder="Senha" secureTextEntry value={password} onChangeText={setPassword} />
       <TextField

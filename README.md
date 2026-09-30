@@ -170,6 +170,18 @@ Conversas individuais sempre notificam o outro participante (não possuem polít
 7. A API calcula os destinatários a partir dos integrantes e da política de notificação do Firestore e busca os tokens de dispositivo ativos.
 8. A API envia as notificações pelo Expo Push Service; tokens rejeitados como `DeviceNotRegistered` são desativados.
 
+### Conteúdo da notificação
+
+A notificação não expõe o texto da mensagem, que só é lido dentro do app: ela aparece na tela bloqueada e na central de notificações. Informa apenas quem enviou e em qual conversa (`server/src/services/notificationContent.ts`):
+
+| Situação | Título | Texto |
+|---|---|---|
+| Conversa individual | Nome do remetente | "Enviou uma nova mensagem" |
+| Mensagem geral no grupo | Nome do grupo | "{remetente} enviou uma nova mensagem" |
+| Integrante mencionado ou selecionado | Nome do grupo | "{remetente} mencionou você" |
+
+O payload (`data`) leva `conversationId`, `conversationType` e `messageId`, usados para abrir a conversa ao tocar na notificação.
+
 ### Ciclo de vida do token do dispositivo
 
 - No login, o app solicita permissão, cria o canal de notificações no Android e registra o token em `users/{uid}/devices/{token}` com `enabled: true`. Falhas nessa etapa não bloqueiam o uso do app: a tela de conversas informa quando a permissão foi negada, quando o dispositivo não oferece push (por exemplo, no navegador) ou quando o registro falhou.

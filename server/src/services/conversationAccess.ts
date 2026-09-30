@@ -21,7 +21,18 @@ export async function loadConversation(conversationId: string): Promise<Conversa
 
   const group = await getGroupRecord(conversationId);
   if (!group) return null;
-  return { type: 'group', participantIds: group.memberIds, notificationPolicy: group.notificationPolicy };
+  return {
+    type: 'group',
+    participantIds: group.memberIds,
+    notificationPolicy: group.notificationPolicy,
+    groupName: group.name,
+  };
+}
+
+export async function getUserName(uid: string): Promise<string | null> {
+  const snapshot = await withTimeout(adminFirestore.collection('users').doc(uid).get(), FIREBASE_TIMEOUT_MS);
+  const name = snapshot.exists ? (snapshot.get('name') as unknown) : null;
+  return typeof name === 'string' && name.trim().length > 0 ? name : null;
 }
 
 // Espelha os integrantes do grupo (fonte da verdade: Firestore) em groupMembers/{groupId} no Realtime Database,
