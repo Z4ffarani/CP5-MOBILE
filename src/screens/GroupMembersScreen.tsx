@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../hooks/useAuth';
 import { useGroups } from '../hooks/useGroups';
 import { getGroup } from '../services/groupService';
-import { getUserProfile } from '../services/userService';
+import { getPublicProfile } from '../services/userService';
 import { GroupMemberItem } from '../components/GroupMemberItem';
 import { Loading } from '../components/Loading';
 import { ErrorMessage } from '../components/ErrorMessage';
@@ -16,7 +16,7 @@ import { availableSlots } from '../utils/groupValidation';
 import { colors } from '../theme/colors';
 import type { RootStackParamList } from '../types/navigation';
 import type { ChatGroup } from '../types/group';
-import type { ChatUser } from '../types/user';
+import type { PublicProfile } from '../types/user';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'GroupMembers'>;
 
@@ -25,7 +25,7 @@ export function GroupMembersScreen({ navigation, route }: Props) {
   const { profile } = useAuth();
   const { removeGroupMember, error } = useGroups();
   const [group, setGroup] = useState<ChatGroup | null>(null);
-  const [members, setMembers] = useState<ChatUser[]>([]);
+  const [members, setMembers] = useState<PublicProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
@@ -36,8 +36,8 @@ export function GroupMembersScreen({ navigation, route }: Props) {
       const loadedGroup = await getGroup(groupId);
       setGroup(loadedGroup);
       if (loadedGroup) {
-        const profiles = await Promise.all(loadedGroup.memberIds.map((uid) => getUserProfile(uid)));
-        setMembers(profiles.filter((item): item is ChatUser => item !== null));
+        const profiles = await Promise.all(loadedGroup.memberIds.map((uid) => getPublicProfile(uid)));
+        setMembers(profiles.filter((item): item is PublicProfile => item !== null));
       }
     } catch {
       setLoadError('Não foi possível carregar os integrantes do grupo.');

@@ -11,10 +11,10 @@ import { ErrorMessage } from '../components/ErrorMessage';
 import { EmptyState } from '../components/EmptyState';
 import { Icon } from '../components/Icon';
 import { getGroup } from '../services/groupService';
-import { getUserProfile } from '../services/userService';
+import { getPublicProfile } from '../services/userService';
 import { colors } from '../theme/colors';
 import type { RootStackParamList } from '../types/navigation';
-import type { ChatUser } from '../types/user';
+import type { PublicProfile } from '../types/user';
 import type { ChatMessage as ChatMessageType } from '../types/chat';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
@@ -26,7 +26,7 @@ export function ChatScreen({ navigation, route }: Props) {
   const [title, setTitle] = useState('');
   const [photoUrl, setPhotoUrl] = useState<string | undefined>(undefined);
   const [otherUid, setOtherUid] = useState<string | null>(null);
-  const [members, setMembers] = useState<Record<string, ChatUser>>({});
+  const [members, setMembers] = useState<Record<string, PublicProfile>>({});
   const listRef = useRef<FlatList<ChatMessageType>>(null);
   const headerHeight = useHeaderHeight();
 
@@ -39,8 +39,8 @@ export function ChatScreen({ navigation, route }: Props) {
         setTitle(group.name);
         setPhotoUrl(group.photoUrl);
 
-        const profiles = await Promise.all(group.memberIds.map((uid) => getUserProfile(uid)));
-        const map: Record<string, ChatUser> = {};
+        const profiles = await Promise.all(group.memberIds.map((uid) => getPublicProfile(uid)));
+        const map: Record<string, PublicProfile> = {};
         profiles.forEach((memberProfile) => {
           if (memberProfile) map[memberProfile.uid] = memberProfile;
         });
@@ -52,7 +52,7 @@ export function ChatScreen({ navigation, route }: Props) {
     const participants = conversationId.split('_');
     const otherParticipant = participants.find((uid) => uid !== profile.uid) ?? participants[0];
     setOtherUid(otherParticipant);
-    getUserProfile(otherParticipant).then((otherProfile) => {
+    getPublicProfile(otherParticipant).then((otherProfile) => {
       if (otherProfile) {
         setTitle(otherProfile.name);
         setPhotoUrl(otherProfile.photoUrl);

@@ -6,6 +6,7 @@ import { groupsRouter } from './routes/groups';
 import { healthRouter } from './routes/health';
 import { notificationsRouter } from './routes/notifications';
 import { photosRouter } from './routes/photos';
+import { usersRouter } from './routes/users';
 
 export function createApp(): Express {
   const app = express();
@@ -17,6 +18,7 @@ export function createApp(): Express {
   app.use('/health', healthRouter);
   app.use('/notifications', notificationsRouter);
   app.use('/groups', groupsRouter);
+  app.use('/users', usersRouter);
   app.use('/photos', photosRouter);
 
   app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {

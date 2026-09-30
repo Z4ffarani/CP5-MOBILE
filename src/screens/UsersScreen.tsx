@@ -102,7 +102,9 @@ export function UsersScreen({ navigation, route }: Props) {
               <Avatar uri={item.photoUrl} name={item.name} size={44} />
               <View style={styles.userInfo}>
                 <Text style={styles.userName}>{item.name}</Text>
-                <Text style={styles.userEmail}>{item.email}</Text>
+                <Text style={styles.userHint}>
+                  {selectForGroup ? 'Toque para selecionar' : 'Toque para conversar'}
+                </Text>
               </View>
               {selectForGroup ? (
                 <Icon
@@ -170,7 +172,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
   },
-  userEmail: {
+  userHint: {
     fontSize: 12,
     color: colors.textSecondary,
     marginTop: 2,

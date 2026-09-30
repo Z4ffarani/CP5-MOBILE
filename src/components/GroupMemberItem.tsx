@@ -3,10 +3,10 @@ import { Pressable, View, Text, StyleSheet } from 'react-native';
 import { Avatar } from './Avatar';
 import { Icon } from './Icon';
 import { colors } from '../theme/colors';
-import type { ChatUser } from '../types/user';
+import type { PublicProfile } from '../types/user';
 
 type GroupMemberItemProps = {
-  user: ChatUser;
+  user: PublicProfile;
   isOwner: boolean;
   onPress: () => void;
   onRemove?: () => void;

@@ -3,12 +3,12 @@ import { View, TextInput, Pressable, Text, ScrollView, Keyboard, StyleSheet } fr
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from './Icon';
 import { colors } from '../theme/colors';
-import type { ChatUser } from '../types/user';
+import type { PublicProfile } from '../types/user';
 
 type ChatInputProps = {
   onSend: (text: string, mentionedUserIds: string[]) => void;
   disabled?: boolean;
-  mentionableMembers?: ChatUser[];
+  mentionableMembers?: PublicProfile[];
 };
 
 export function ChatInput({ onSend, disabled, mentionableMembers }: ChatInputProps) {
@@ -30,7 +30,7 @@ export function ChatInput({ onSend, disabled, mentionableMembers }: ChatInputPro
   // Afasta o campo da barra de navegação do sistema; com o teclado aberto ela fica coberta e o recuo sobra.
   const bottomPadding = 8 + (keyboardVisible ? 0 : insets.bottom);
 
-  function toggleMention(user: ChatUser) {
+  function toggleMention(user: PublicProfile) {
     setMentionedUserIds((current) =>
       current.includes(user.uid) ? current.filter((id) => id !== user.uid) : [...current, user.uid],
     );

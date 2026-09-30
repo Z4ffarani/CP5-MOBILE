@@ -9,7 +9,7 @@ import {
   isSessionValid,
 } from '../services/authService';
 import { withTimeout } from '../utils/withTimeout';
-import { getUserProfile } from '../services/userService';
+import { getOwnProfile } from '../services/userService';
 import { registerDeviceForPush, unregisterDeviceForPush } from '../services/notificationService';
 import type { ChatUser, LoginInput, RegisterInput } from '../types/user';
 import type { PushRegistrationStatus } from '../types/notification';
@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        setProfile(await withTimeout(getUserProfile(user.uid), PROFILE_TIMEOUT_MS));
+        setProfile(await withTimeout(getOwnProfile(user.uid), PROFILE_TIMEOUT_MS));
       } catch {
         setError('Não foi possível carregar seu perfil. Verifique sua conexão.');
       } finally {

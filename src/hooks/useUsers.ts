@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { listUsers } from '../services/userService';
-import type { ChatUser } from '../types/user';
+import type { PublicProfile } from '../types/user';
 
 export function useUsers(currentUid: string | undefined, searchTerm: string) {
-  const [users, setUsers] = useState<ChatUser[]>([]);
+  const [users, setUsers] = useState<PublicProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,7 +30,7 @@ export function useUsers(currentUid: string | undefined, searchTerm: string) {
     const normalizedTerm = searchTerm.trim().toLowerCase();
     return users
       .filter((user) => user.uid !== currentUid)
-      .filter((user) => !normalizedTerm || user.name.toLowerCase().includes(normalizedTerm) || user.email.toLowerCase().includes(normalizedTerm));
+      .filter((user) => !normalizedTerm || user.name.toLowerCase().includes(normalizedTerm));
   }, [users, currentUid, searchTerm]);
 
   return { users: filteredUsers, loading, error };

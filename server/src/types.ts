@@ -31,6 +31,16 @@ export type ConversationContext =
   | { type: 'direct'; participantIds: string[] }
   | { type: 'group'; participantIds: string[]; notificationPolicy: NotificationPolicy; groupName: string };
 
+export type FullProfile = {
+  uid: string;
+  name: string;
+  photoUrl: string;
+  createdAt: number;
+  email: string;
+  phoneNumber: string;
+  birthDate: string;
+};
+
 export type NotificationContent = {
   title: string;
   body: string;

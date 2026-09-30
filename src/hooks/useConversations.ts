@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { listDirectConversationsForUser } from '../services/chatService';
 import { listGroupsForUser } from '../services/groupService';
-import { getUserProfile } from '../services/userService';
+import { getPublicProfile } from '../services/userService';
 import type { ConversationSummary } from '../types/chat';
 
 export function useConversations(uid: string | undefined) {
@@ -32,7 +32,7 @@ export function useConversations(uid: string | undefined) {
       const directSummaries = await Promise.all(
         directConversations.map(async (conversation) => {
           const otherUid = conversation.participants.find((participant) => participant !== uid) ?? uid;
-          const otherProfile = await getUserProfile(otherUid);
+          const otherProfile = await getPublicProfile(otherUid);
           const summary: ConversationSummary = {
             id: conversation.id,
             type: 'direct',

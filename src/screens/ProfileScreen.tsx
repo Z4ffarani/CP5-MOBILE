@@ -5,7 +5,7 @@ import { Avatar } from '../components/Avatar';
 import { Loading } from '../components/Loading';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { Icon, type IconName } from '../components/Icon';
-import { getUserProfile } from '../services/userService';
+import { getSharedProfile } from '../services/userService';
 import { colors } from '../theme/colors';
 import type { RootStackParamList } from '../types/navigation';
 import type { ChatUser } from '../types/user';
@@ -24,7 +24,8 @@ export function ProfileScreen({ route }: Props) {
 
   useEffect(() => {
     let active = true;
-    getUserProfile(uid)
+    // Dados cadastrais vêm da API, que só os entrega a quem tem conversa individual ou grupo em comum.
+    getSharedProfile(uid)
       .then((result) => {
         if (active) setProfile(result);
       })

@@ -29,7 +29,7 @@ Aplicativo de chat individual e em grupo, desenvolvido em React Native (Expo) co
 | Serviço | Responsabilidade |
 |---|---|
 | Firebase Authentication | Cadastro e login por e-mail e senha, sessão do usuário, `uid`. |
-| Cloud Firestore | Perfis de usuário, grupos e seus metadados, integrantes, limite de integrantes, política de notificações, tokens de dispositivo. |
+| Cloud Firestore | Perfis de usuário (público em `users/{uid}` e dados cadastrais em `users/{uid}/private/profile`), grupos e seus metadados, integrantes, limite de integrantes, política de notificações, tokens de dispositivo. |
 | Firebase Realtime Database | Mensagens individuais e em grupo, sincronizadas em tempo real. |
 | Firebase Cloud Messaging | Entrega das notificações push calculadas e enviadas pela API própria. |
 
@@ -220,12 +220,24 @@ A API está publicada no **Railway**, a partir do diretório `server/` deste mes
 
 **URL pública da API:** https://whatchat-api-production.up.railway.app
 
+### Permissões da credencial administrativa
+
+A API não usa a conta de serviço padrão do Firebase Admin SDK, que tem acesso administrativo a todo o projeto. Ela usa uma conta de serviço dedicada (`whatchat-api`), com apenas os papéis de que precisa:
+
+| Papel | Uso na API |
+|---|---|
+| **Usuário do Cloud Datastore** (`roles/datastore.user`) | Ler e gravar no Firestore: grupos, participantes, política de notificação, perfis e tokens de dispositivo. |
+| **Administrador do Firebase Realtime Database** (`roles/firebasedatabase.admin`) | Ler mensagens, marcar mensagens como notificadas e manter o espelho `groupMembers`. |
+
+A validação do Firebase ID Token (`verifyIdToken`) usa as chaves públicas do Google e não exige papel. O envio de push é feito pelo Expo Push Service, com uma credencial FCM V1 separada (conta `expo-fcm-push`, papel *Firebase Cloud Messaging API Admin*), armazenada somente no EAS. A chave da conta `whatchat-api` fica apenas nas variáveis `FIREBASE_CLIENT_EMAIL` e `FIREBASE_PRIVATE_KEY` do serviço no Railway.
+
 ### Endpoints
 
 | Método | Rota | Descrição |
 |---|---|---|
 | `GET` | `/health` | Health check — retorna `{ status: "ok" }` quando a API está no ar. |
 | `POST` | `/notifications/messages` | Recebe `{ conversationId, messageId }` com `Authorization: Bearer <firebase-id-token>` e envia as notificações aos destinatários permitidos. |
+| `GET` | `/users/:uid/profile` | Autenticado com o Firebase ID Token. Retorna nome, foto, e-mail, celular e data de nascimento do usuário somente se o solicitante compartilha com ele uma conversa individual ou um grupo (ou é o próprio usuário); caso contrário, `403`. |
 | `POST` | `/groups/:groupId/sync-members` | Autenticado com o Firebase ID Token e restrito a integrantes. Relê o grupo no Firestore e espelha os integrantes em `groupMembers/{groupId}` no Realtime Database (veja [Regras de segurança](#regras-de-segurança)). |
 | `POST` | `/photos/:scope/:id` | `scope` é `users` ou `groups`. Recebe o arquivo (`multipart/form-data`, campo `file`) autenticado com o Firebase ID Token, grava no bucket e retorna `{ url }`. |
 | `GET` | `/photos/:scope/:id` | Redireciona (`302`) para uma URL assinada e temporária do bucket — é o endereço salvo no Firestore como `photoUrl`. |
@@ -241,9 +253,9 @@ O limite (`memberLimit`) é validado em duas camadas:
 
 ## Regras de segurança
 
-- `firestore.rules`: usuários só criam/editam o próprio perfil; tokens de dispositivo só são lidos e gravados pelo próprio dono; conversas diretas só podem ser lidas pelos dois participantes (conferidos pelo próprio id, o que permite verificar se a conversa já existe antes de criá-la), exigem dois participantes distintos e um id no padrão determinístico dos dois `uid` ordenados; grupos só podem ser lidos por integrantes e criados/alterados pelo proprietário, com o limite de integrantes validado na própria regra.
+- `firestore.rules`: usuários só criam/editam o próprio perfil, e o documento público `users/{uid}` aceita apenas `uid`, `name`, `photoUrl` e `createdAt`; os dados cadastrais ficam em `users/{uid}/private/profile`, que só o próprio usuário lê e grava; tokens de dispositivo só são lidos e gravados pelo próprio dono; conversas diretas só podem ser lidas pelos dois participantes (conferidos pelo próprio id, o que permite verificar se a conversa já existe antes de criá-la), exigem dois participantes distintos e um id no padrão determinístico dos dois `uid` ordenados; grupos só podem ser lidos por integrantes e criados/alterados pelo proprietário, com o limite de integrantes validado na própria regra.
 - `database.rules.json`: somente participantes leem e enviam mensagens. Em conversas diretas, o participante é identificado pelo próprio id da conversa (`uidA_uidB`). Em grupos, o Realtime Database não consegue consultar o Firestore, por isso a API mantém um espelho dos integrantes em `groupMembers/{groupId}` — gravado apenas pela API (clientes não leem nem escrevem nesse nó) a partir dos `memberIds` do Firestore, sempre que um grupo é criado, um integrante é adicionado ou removido e quando o chat do grupo é aberto. Assim, um integrante removido perde o acesso às mensagens assim que o espelho é atualizado. Cada mensagem só pode ser criada (nunca sobrescrita ou apagada) e é validada para garantir que `senderId` corresponda ao usuário autenticado, que `id`/`conversationId` batam com o caminho, que `conversationType` corresponda ao tipo da conversa e que o texto tenha entre 1 e 2000 caracteres.
-- A restrição de acesso ao perfil completo de um usuário (Tela de Perfil) apenas a quem compartilha uma conversa ou grupo é reforçada na aplicação: a tela de perfil só é alcançável a partir do cabeçalho de uma conversa direta já existente ou da lista de integrantes de um grupo em comum — ambos contextos que já comprovam relação. A listagem geral de usuários (`Tela de Usuários`, necessária para iniciar novas conversas) permanece acessível a qualquer usuário autenticado, conforme o próprio modelo de dados sugerido no enunciado (perfil em documento único no Firestore).
+- Dados cadastrais (e-mail, celular e data de nascimento) não ficam acessíveis a quem não tem conversa ou grupo em comum com o usuário. O perfil é dividido em dois documentos: o público (`users/{uid}`, com nome e foto) é lido por qualquer usuário autenticado, pois é necessário para a lista de usuários, as conversas e os integrantes; o privado (`users/{uid}/private/profile`) só é lido pelo próprio dono. A Tela de Perfil obtém os dados cadastrais de outro usuário pela API (`GET /users/:uid/profile`), que confere se existe a conversa individual entre os dois ou algum grupo com ambos antes de responder; sem vínculo, a API responde `403`. Perfis criados antes dessa separação são migrados automaticamente pelo app no login do próprio usuário.
 - Validações que dependem simultaneamente do Firestore e do Realtime Database (existência da mensagem + participação do remetente + política, e o espelho de integrantes dos grupos) são executadas pela API, e não pelas regras dos bancos.
 
 ## Capturas de tela e evidência de notificação

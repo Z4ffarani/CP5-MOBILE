@@ -11,11 +11,22 @@ service cloud.firestore {
       return uidA < uidB ? uidA + '_' + uidB : uidB + '_' + uidA;
     }
 
+    // O documento público guarda só o necessário para listar e exibir usuários (nome e foto).
+    function isPublicProfile(uid) {
+      return request.resource.data.keys().hasOnly(['uid', 'name', 'photoUrl', 'createdAt'])
+        && request.resource.data.uid == uid;
+    }
+
     match /users/{uid} {
       allow read: if isSignedIn();
-      allow create: if isSignedIn() && request.auth.uid == uid;
-      allow update: if isSignedIn() && request.auth.uid == uid;
+      allow create, update: if isSignedIn() && request.auth.uid == uid && isPublicProfile(uid);
       allow delete: if false;
+
+      // Dados cadastrais (e-mail, celular, data de nascimento): somente o próprio usuário lê e grava.
+      // Para quem compartilha uma conversa ou grupo, a API entrega esses dados após verificar o vínculo.
+      match /private/{docId} {
+        allow read, write: if isSignedIn() && request.auth.uid == uid;
+      }
 
       match /devices/{deviceId} {
         allow read, write: if isSignedIn() && request.auth.uid == uid;
