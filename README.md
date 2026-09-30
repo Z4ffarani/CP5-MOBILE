@@ -250,7 +250,7 @@ O limite (`memberLimit`) é validado em duas camadas:
 
 ### Evidência de notificação recebida (Android, dispositivo físico)
 
-Notificações recebidas pelo development build em um aparelho Android: mensagem individual, mensagem geral no grupo (política `all_group_messages`) e mensagem com menção. Ao tocar na notificação, o app abre a conversa correspondente.
+Notificações recebidas pelo development build em um aparelho Android: uma mensagem individual ("Elon · Enviou uma nova mensagem") e uma menção no grupo ("Equipe CP5 · Elon mencionou você"), sem expor o texto das mensagens (veja [Conteúdo da notificação](#conteúdo-da-notificação)). Ao tocar na notificação, o app abre a conversa correspondente. As quatro políticas de grupo foram testadas no aparelho.
 
 <p>
   <img src="docs/screenshots/notificacoes-recebidas.jpg" alt="Notificações do WhatChat na central de notificações do Android" width="260" />
