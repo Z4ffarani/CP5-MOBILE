@@ -13,6 +13,8 @@ Aplicativo de chat individual e em grupo, desenvolvido em React Native (Expo) co
 O app pode ser testado sem iniciar servidor local nem instalar dependências: a API já está publicada e o APK para Android traz todo o código embutido.
 
 1. **Instale o APK** em um aparelho Android: [WhatChat.apk](https://github.com/Z4ffarani/CP5-MOBILE/releases/latest/download/WhatChat.apk), também disponível na página de [Releases](https://github.com/Z4ffarani/CP5-MOBILE/releases). O Android pode pedir permissão para instalar apps de fontes desconhecidas.
+   - Se o link abrir no app do GitHub (que não baixa arquivos de release), copie-o e cole na barra de endereço do navegador do celular. Caso o navegador avise que o arquivo pode ser prejudicial, escolha baixar mesmo assim.
+   - Link alternativo, do mesmo APK gerado pelo EAS Build: [download direto pelo Expo](https://expo.dev/artifacts/eas/UFV5aaWCts7VLEj5vjxiSp_sVZd_FUvtQ_40anliGiA.apk) (links de artefatos do EAS podem expirar; o da Release do GitHub é permanente).
 2. **Crie uma conta** pela tela de cadastro (nome, e-mail, senha, celular, data de nascimento e foto) e **permita as notificações** quando o Android solicitar.
 3. **Crie uma segunda conta** em outro aparelho com o APK, ou pela versão web rodando localmente (`npx expo start --web`, veja [Instalação e execução](#instalação-e-execução-do-aplicativo)).
 4. Troque mensagens entre as contas, crie um grupo e altere a política de notificações: com o app em segundo plano ou fechado, as notificações chegam ao aparelho, e tocar nelas abre a conversa.
