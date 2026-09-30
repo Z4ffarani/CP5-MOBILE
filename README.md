@@ -236,7 +236,38 @@ O limite (`memberLimit`) é validado em duas camadas:
 
 ## Capturas de tela e evidência de notificação
 
-_A adicionar após os testes em dispositivo físico._
+### Evidência de notificação recebida (Android, dispositivo físico)
+
+Notificações recebidas pelo development build em um aparelho Android: mensagem individual, mensagem geral no grupo (política `all_group_messages`) e mensagem com menção. Ao tocar na notificação, o app abre a conversa correspondente.
+
+<p>
+  <img src="docs/screenshots/notificacoes-recebidas.jpg" alt="Notificações do WhatChat na central de notificações do Android" width="260" />
+  <img src="docs/screenshots/icone-com-contador.jpg" alt="Ícone do WhatChat com contador de notificações" width="420" />
+</p>
+
+### Telas do aplicativo
+
+| Login | Cadastro | Conversas |
+|---|---|---|
+| <img src="docs/screenshots/01-login.jpg" width="220" /> | <img src="docs/screenshots/02-cadastro.jpg" width="220" /> | <img src="docs/screenshots/03-conversas.jpg" width="220" /> |
+
+| Estado vazio | Seleção de usuários | Chat individual |
+|---|---|---|
+| <img src="docs/screenshots/11-estado-vazio.jpg" width="220" /> | <img src="docs/screenshots/12-usuarios.jpg" width="220" /> | <img src="docs/screenshots/04-chat-individual.jpg" width="220" /> |
+
+| Perfil (pelo cabeçalho do chat) | Chat em grupo com menções | Grupo recém-criado |
+|---|---|---|
+| <img src="docs/screenshots/05-perfil.jpg" width="220" /> | <img src="docs/screenshots/06-chat-grupo.jpg" width="220" /> | <img src="docs/screenshots/10-grupo-criado.jpg" width="220" /> |
+
+| Novo grupo com foto | Políticas de notificação | Integrantes (visão do proprietário) |
+|---|---|---|
+| <img src="docs/screenshots/08-novo-grupo.jpg" width="220" /> | <img src="docs/screenshots/09-politicas-notificacao.jpg" width="220" /> | <img src="docs/screenshots/07-integrantes.jpg" width="220" /> |
+
+| Edição do grupo | Validação do limite | Grupo após a edição (limite 3) |
+|---|---|---|
+| <img src="docs/screenshots/13-editar-grupo.jpg" width="220" /> | <img src="docs/screenshots/14-validacao-limite.jpg" width="220" /> | <img src="docs/screenshots/15-grupo-editado.jpg" width="220" /> |
+
+> As telas acima foram capturadas na versão web do app (mesmo código, em viewport de celular), por isso a lista de conversas exibe o aviso de que notificações push não estão disponíveis naquele dispositivo. As notificações foram testadas no aparelho Android, conforme a evidência acima.
 
 ## Hooks e organização
 
@@ -274,7 +305,7 @@ Hooks customizados (`useAuth`, `useChat`, `useGroups`, `useUsers`, `useConversat
 
 ### 🔔 Notificações push
 
-- [ ] Firebase Cloud Messaging configurado — código, `eas.json` e documentação prontos; falta vincular o projeto EAS, adicionar o `google-services.json`, enviar a credencial FCM V1 ao EAS e testar o recebimento em dispositivo físico
+- [x] Firebase Cloud Messaging configurado — projeto EAS vinculado, `google-services.json` no app, credencial FCM V1 (conta de serviço dedicada, papel *Firebase Cloud Messaging API Admin*) no EAS; recebimento testado em dispositivo Android físico
 - [x] Tokens de dispositivos armazenados com segurança
 - [x] API online autenticada com Firebase ID Token
 - [x] API publicada em URL pública com HTTPS — https://whatchat-api-production.up.railway.app
@@ -300,7 +331,7 @@ Hooks customizados (`useAuth`, `useChat`, `useGroups`, `useUsers`, `useConversat
 
 ### 📄 Documentação e entrega
 
-- [ ] README completo com prints e configuração — falta anexar capturas de tela e evidência de notificação após teste em dispositivo
+- [x] README completo com prints e configuração — capturas das telas e evidência de notificação recebida em [Capturas de tela](#capturas-de-tela-e-evidência-de-notificação)
 - [x] README com nome e RM de todos os integrantes
 - [x] Arquivo `firebaseConfig.json` presente no repositório, com os valores reais do projeto
 - [x] `firebaseConfig.json` sem credenciais administrativas ou chaves privadas
